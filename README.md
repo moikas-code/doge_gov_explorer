@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Doge Gov Explorer
+
+A dashboard application to explore DOGE (Department of Government Excellence) data, including savings and payment information. Created to provide transparency into the operations of the government entity established in 2025.
+
+## Features
+
+- Overview dashboard with key metrics
+- Detailed savings history and statistics
+- Payment tracking and analysis
+- Responsive design using NextUI components
+- Built with Next.js and TypeScript
+
+## Prerequisites
+
+- [Bun](https://bun.sh) (v1.0.0 or higher)
+- Node.js (v18.0.0 or higher)
 
 ## Getting Started
 
-First, run the development server:
-
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
+git clone https://github.com/yourusername/doge_gov_explorer.git
+cd doge_gov_explorer
+```
+
+2. Install dependencies:
+```bash
+bun install
+```
+
+3. Start the development server:
+```bash
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+doge_gov_explorer/
+├── src/
+│   ├── app/              # Next.js App Router pages
+│   ├── components/       # Reusable React components
+│   └── styles/          # Global styles
+├── public/              # Static assets
+├── README.md           # Project documentation
+├── package.json        # Project dependencies
+└── tailwind.config.ts  # Tailwind CSS configuration
+```
 
-## Learn More
+## Built With
 
-To learn more about Next.js, take a look at the following resources:
+- [Next.js](https://nextjs.org/) - React framework
+- [NextUI](https://nextui.org/) - UI component library
+- [Tailwind CSS](https://tailwindcss.com/) - CSS framework
+- [TypeScript](https://www.typescriptlang.org/) - Type safety
+- [Bun](https://bun.sh) - JavaScript runtime and package manager
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+The project uses Next.js 13+ with the App Router and Server Components. Key technologies include:
 
-## Deploy on Vercel
+- TypeScript for type safety
+- NextUI components for the user interface
+- Tailwind CSS for styling
+- Bun as the JavaScript runtime
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Contributing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
