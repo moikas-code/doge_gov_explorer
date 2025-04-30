@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetch_api } from '@/utils/api';
-import { api_response } from '@/types/api';
 
 export async function GET(request: NextRequest) {
   try {

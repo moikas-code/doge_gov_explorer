@@ -1,12 +1,39 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Navbar } from '@/components/navbar'
 import { Card, CardBody, CardHeader } from '@nextui-org/react'
 import { fetch_all_savings, fetch_payments } from '@/utils/api'
-import { savings_initiative, api_response } from '@/types/api'
 
-interface DashboardStats {
+interface savings_initiative {
+  id: string;
+  date: string;
+  amount: number;
+  savings: number;
+  projected_savings: number;
+  status: string;
+  type: string;
+  department: string;
+  description?: string;
+  link?: string;
+}
+
+interface contract_item {
+  id: string;
+  date: string;
+  amount: number;
+  department: string;
+  type: string;
+  description?: string;
+  link?: string;
+}
+
+interface chart_data {
+  name: string;
+  value: number;
+}
+
+interface stats {
   total_savings: number;
   projected_savings: number;
   payments: number;
@@ -14,12 +41,25 @@ interface DashboardStats {
   payments_error: string | null;
 }
 
-interface ChartData {
-  name: string;
-  value: number;
+interface savings_response {
+  success: boolean;
+  result: Array<savings_initiative | contract_item>;
+  meta: {
+    total_results: number;
+    pages: number;
+  };
 }
 
-const initial_stats: DashboardStats = {
+interface payment_response {
+  result: {
+    payments: Array<{
+      post_date: string;
+      amount: number;
+    }>;
+  };
+}
+
+const initial_stats: stats = {
   total_savings: 0,
   projected_savings: 0,
   payments: 0,
@@ -27,7 +67,7 @@ const initial_stats: DashboardStats = {
   payments_error: null
 }
 
-const format_chart_data = (data: DashboardStats): ChartData[] => {
+const format_chart_data = (data: stats): chart_data[] => {
   return [
     { name: 'Total Savings', value: data.total_savings },
     { name: 'Projected Savings', value: data.projected_savings },
@@ -47,16 +87,11 @@ const format_table_data = (data: savings_initiative[]): Record<string, string | 
 };
 
 export default function Home() {
-  const [stats, set_stats] = useState<DashboardStats>(initial_stats)
-  const [loading, set_loading] = useState(true)
+  const [stats, set_stats] = useState<stats>(initial_stats)
 
   useEffect(() => {
-    let mounted = true
-
-    async function load_data() {
+    const fetch_data = async () => {
       try {
-        console.log('Fetching data...')
-        
         // Fetch data independently to handle partial failures
         let total_savings = 0;
         let projected_savings = 0;
@@ -68,12 +103,14 @@ export default function Home() {
           const savings_response = await fetch_all_savings();
           
           // Calculate total savings
-          total_savings = savings_response.result?.reduce((sum: number, item: any) => sum + (item.savings || 0), 0) || 0;
+          total_savings = (savings_response as savings_response).result
+            ?.filter((item): item is savings_initiative => 'savings' in item)
+            .reduce((sum, item) => sum + (item.savings || 0), 0) || 0;
 
           // Calculate projected savings
-          projected_savings = savings_response.result
-            ?.filter((item: any) => item.status === 'Verified')
-            .reduce((sum: number, item: any) => sum + (item.projected_savings || 0), 0) || 0;
+          projected_savings = (savings_response as savings_response).result
+            ?.filter((item): item is savings_initiative => 'projected_savings' in item && item.status === 'Verified')
+            .reduce((sum, item) => sum + (item.projected_savings || 0), 0) || 0;
 
         } catch (error) {
           savings_error = error instanceof Error ? error.message : 'Failed to fetch savings data';
@@ -85,47 +122,28 @@ export default function Home() {
           thirty_days_ago.setDate(thirty_days_ago.getDate() - 30);
           
           // Calculate payments metrics
-          payments = payments_response.result?.payments
-            ?.filter((item: any) => new Date(item.post_date) >= thirty_days_ago)
-            .reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
+          payments = (payments_response as payment_response).result?.payments
+            ?.filter(item => new Date(item.post_date) >= thirty_days_ago)
+            .reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
 
         } catch (error) {
           payments_error = error instanceof Error ? error.message : 'Failed to fetch payments data';
         }
 
-        if (mounted) {
-          set_stats({
-            total_savings,
-            projected_savings,
-            payments,
-            savings_error,
-            payments_error
-          });
-        }
-      } finally {
-        if (mounted) {
-          set_loading(false)
-        }
+        set_stats({
+          total_savings,
+          projected_savings,
+          payments,
+          savings_error,
+          payments_error
+        });
+      } catch (error) {
+        console.error('Error fetching data:', error);
       }
-    }
-    
-    load_data()
+    };
 
-    return () => {
-      mounted = false
-    }
-  }, [])
-
-  if (loading) {
-    return (
-      <main className="min-h-screen">
-        <Navbar />
-        <div className="container mx-auto px-4 py-8">
-          <p>Loading...</p>
-        </div>
-      </main>
-    )
-  }
+    fetch_data();
+  }, []);
 
   return (
     <main className="min-h-screen">

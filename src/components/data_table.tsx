@@ -16,16 +16,16 @@ import { ChevronDownIcon } from '@/components/icons/chevron_down_icon';
 
 type SortDirection = 'ascending' | 'descending';
 
-interface column_def {
+interface column_def<T> {
   key: string;
   label: string;
-  render?: (value: any, row?: any) => React.ReactNode;
+  render?: (value: T[keyof T], row: T) => React.ReactNode;
   sortable?: boolean;
   min_width?: string;
 }
 
 interface data_table_props<T> {
-  columns: column_def[];
+  columns: column_def<T>[];
   data: T[];
   loading: boolean;
   total_pages: number;
@@ -39,7 +39,7 @@ interface data_table_props<T> {
   render_metadata?: (row: T) => React.ReactNode;
 }
 
-const TableColumns = ({ columns, on_sort_change }: { columns: column_def[], on_sort_change?: (key: string, order: SortDirection) => void }) => {
+const TableColumns = ({ columns, on_sort_change }: { columns: column_def<any>[], on_sort_change?: (key: string, order: SortDirection) => void }) => {
   const header_columns = [
     <TableColumn key="expand" className="w-12 md:w-14 min-w-[48px] max-w-[56px]">
       <span className="sr-only">Expand</span>
@@ -67,7 +67,7 @@ const TableRows = <T extends Record<string, unknown>>({
   render_metadata
 }: {
   item: T;
-  columns: column_def[];
+  columns: column_def<T>[];
   row_index: number | undefined;
   is_expanded: boolean;
   can_expand: boolean;
@@ -86,36 +86,43 @@ const TableRows = <T extends Record<string, unknown>>({
     );
   }
 
+  const cells = [
+    <TableCell 
+      key={`expand-cell-${row_index}`} 
+      className="align-top w-12 md:w-14 min-w-[48px] max-w-[56px]"
+    >
+      {can_expand ? (
+        <button
+          aria-label={is_expanded ? 'Collapse row' : 'Expand row'}
+          onClick={e => { e.stopPropagation(); if (typeof row_index === 'number') handle_row_expand(row_index); }}
+          className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded hover:bg-kawaii-pink/10 focus:outline-none"
+        >
+          <ChevronDownIcon className={`w-4 h-4 md:w-5 md:h-5 transition-transform ${is_expanded ? 'rotate-180' : ''}`} />
+        </button>
+      ) : null}
+    </TableCell>
+  ];
+
+  columns.forEach((column) => {
+    cells.push(
+      <TableCell 
+        key={`${column.key}-cell-${row_index}`}
+        className={`text-xs md:text-sm ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
+      >
+        {column.render
+          ? column.render(item[column.key] as T[keyof T], item)
+          : item[column.key]?.toString() || '-'}
+      </TableCell>
+    );
+  });
+
   return (
     <TableRow 
       key={`row-${row_index}`}
       className="hover:bg-kawaii-pink/5 transition-colors cursor-pointer"
       onClick={() => { if (typeof row_index === 'number' && can_expand) handle_row_expand(row_index); }}
     >
-      <TableCell 
-        key={`expand-cell-${row_index}`} 
-        className="align-top w-12 md:w-14 min-w-[48px] max-w-[56px]"
-      >
-        {can_expand ? (
-          <button
-            aria-label={is_expanded ? 'Collapse row' : 'Expand row'}
-            onClick={e => { e.stopPropagation(); if (typeof row_index === 'number') handle_row_expand(row_index); }}
-            className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded hover:bg-kawaii-pink/10 focus:outline-none"
-          >
-            <ChevronDownIcon className={`w-4 h-4 md:w-5 md:h-5 transition-transform ${is_expanded ? 'rotate-180' : ''}`} />
-          </button>
-        ) : null}
-      </TableCell>
-      {columns.map((column) => (
-        <TableCell 
-          key={`${column.key}-cell-${row_index}`}
-          className={`text-xs md:text-sm ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
-        >
-          {column.render
-            ? column.render(item[column.key], item)
-            : item[column.key]?.toString() || '-'}
-        </TableCell>
-      ))}
+      {cells}
     </TableRow>
   );
 };
@@ -194,23 +201,22 @@ export const DataTable = <T extends Record<string, unknown>>({
           }}
           bottomContentPlacement="outside"
         >
-          <TableHeader columns={['expand', ...columns.map(c => c.key)]}>
-            {(columnKey: string) => (
-              <TableColumn
-                key={columnKey}
-                allowsSorting={columnKey !== 'expand' && columns.find(c => c.key === columnKey)?.sortable !== false && !!on_sort_change}
-                className={
-                  columnKey === 'expand'
-                    ? "w-12 md:w-14 min-w-[48px] max-w-[56px]"
-                    : `text-xs md:text-sm hover:text-accent-cyan transition-colors ${columns.find(c => c.key === columnKey)?.min_width ? `min-w-[${columns.find(c => c.key === columnKey)?.min_width}]` : ''}`
-                }
-              >
-                {columnKey === 'expand' ? (
+          <TableHeader>
+            {() => (
+              <>
+                <TableColumn key="expand" className="w-12 md:w-14 min-w-[48px] max-w-[56px]">
                   <span className="sr-only">Expand</span>
-                ) : (
-                  columns.find(c => c.key === columnKey)?.label
-                )}
-              </TableColumn>
+                </TableColumn>
+                {columns.map((column) => (
+                  <TableColumn
+                    key={column.key}
+                    allowsSorting={column.sortable !== false && !!on_sort_change}
+                    className={`text-xs md:text-sm hover:text-accent-cyan transition-colors ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
+                  >
+                    {column.label}
+                  </TableColumn>
+                ))}
+              </>
             )}
           </TableHeader>
           <TableBody

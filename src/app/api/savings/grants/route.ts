@@ -1,66 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetch_grant_savings } from '@/utils/api';
-import type { savings_initiative, api_response } from '@/types/api';
+import { fetch_api } from '@/utils/api';
+import type { savings_initiative } from '@/types/api';
 
-interface grant_item {
-  date: string;
-  agency: string;
-  recipient: string;
-  value: number;
-  savings: number;
-  link: string | null;
-  description: string | null;
+interface grants_response {
+  result: {
+    grants: savings_initiative[];
+  };
 }
-
 
 export async function GET(request: NextRequest) {
   try {
     const search_params = request.nextUrl.searchParams;
-    const page = parseInt(search_params.get('page') || '1');
-    const per_page = parseInt(search_params.get('per_page') || '500');
+    const page = Number(search_params.get('page')) || 1;
+    const items_per_page = Number(search_params.get('items_per_page')) || 10;
     const sort_by = search_params.get('sort_by');
     const sort_order = search_params.get('sort_order');
 
-    const api_response = await fetch_grant_savings();
-    const filtered_data = [...api_response.result.grants];
+    const api_response = await fetch_api<grants_response>('/savings/grants');
+    const filtered_data = [...(api_response.result.grants || [])];
 
-    // Apply sorting if provided
+    // Sort data if sort parameters are provided
     if (sort_by && sort_order) {
       filtered_data.sort((a, b) => {
-        const field_a = a[sort_by as keyof savings_initiative];
-        const field_b = b[sort_by as keyof savings_initiative];
-        
-        if (field_a === null || field_b === null) return 0;
-        
-        const comparison = field_a > field_b ? 1 : -1;
-        return sort_order === 'asc' ? comparison : -comparison;
+        const value_a = a[sort_by as keyof savings_initiative];
+        const value_b = b[sort_by as keyof savings_initiative];
+        if (typeof value_a === 'number' && typeof value_b === 'number') {
+          return sort_order === 'ascending' ? value_a - value_b : value_b - value_a;
+        }
+        return 0;
       });
     }
 
-    // Apply pagination
-    const start_index = (page - 1) * per_page;
-    const end_index = start_index + per_page;
+    // Calculate pagination
+    const total_items = filtered_data.length;
+    const total_pages = Math.ceil(total_items / items_per_page);
+    const start_index = (page - 1) * items_per_page;
+    const end_index = start_index + items_per_page;
     const paginated_data = filtered_data.slice(start_index, end_index);
 
     return NextResponse.json({
-      success: true,
-      result: {
-        grants: paginated_data
-      },
-      meta: {
-        total_results: filtered_data.length,
-        pages: Math.ceil(filtered_data.length / per_page)
-      }
+      result: paginated_data,
+      total_pages,
+      current_page: page,
+      items_per_page
     });
-
   } catch (error) {
-    console.error('Error in grants route:', error);
-    return NextResponse.json(
-      {
-        success: false,
-        message: 'An error occurred while processing your request. We\'re on it.'
-      },
-      { status: 500 }
-    );
+    console.error('Error fetching grants:', error);
+    return NextResponse.json({ error: 'Failed to fetch grants' }, { status: 500 });
   }
 } 
