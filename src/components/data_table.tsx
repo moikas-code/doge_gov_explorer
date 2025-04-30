@@ -39,24 +39,6 @@ interface data_table_props<T> {
   render_metadata?: (row: T) => React.ReactNode;
 }
 
-const TableColumns = ({ columns, on_sort_change }: { columns: column_def<any>[], on_sort_change?: (key: string, order: SortDirection) => void }) => {
-  const header_columns = [
-    <TableColumn key="expand" className="w-12 md:w-14 min-w-[48px] max-w-[56px]">
-      <span className="sr-only">Expand</span>
-    </TableColumn>,
-    ...columns.map((column) => (
-      <TableColumn
-        key={column.key}
-        allowsSorting={column.sortable !== false && !!on_sort_change}
-        className={`text-xs md:text-sm hover:text-accent-cyan transition-colors ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
-      >
-        {column.label}
-      </TableColumn>
-    ))
-  ];
-  return header_columns;
-};
-
 const TableRows = <T extends Record<string, unknown>>({
   item,
   columns,

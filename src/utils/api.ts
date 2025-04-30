@@ -1,5 +1,4 @@
 import { api_response, savings_initiative, payments_response } from '@/types/api';
-import { api_error_response } from '@/types/api';
 
 const API_BASE_URL = 'https://api.doge.gov';
 

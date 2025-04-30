@@ -17,7 +17,7 @@ interface contracts_page_props {
 }
 
 interface contracts_state {
-  data: any[];
+  data: contracts_response['contracts'];
   loading: boolean;
   error: string | null;
   meta: {

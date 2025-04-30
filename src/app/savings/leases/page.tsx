@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { DataTable } from '@/components/data_table';
 import { api_response, leases_response } from '@/types/api';
 import { formatCurrency } from '@/utils/format';

@@ -67,25 +67,6 @@ const initial_stats: stats = {
   payments_error: null
 }
 
-const format_chart_data = (data: stats): chart_data[] => {
-  return [
-    { name: 'Total Savings', value: data.total_savings },
-    { name: 'Projected Savings', value: data.projected_savings },
-  ];
-};
-
-const format_table_data = (data: savings_initiative[]): Record<string, string | number>[] => {
-  return data.map(item => ({
-    id: item.id,
-    description: item.description,
-    amount: item.amount,
-    status: item.status,
-    department: item.department,
-    date: item.date,
-    type: item.type
-  }));
-};
-
 export default function Home() {
   const [stats, set_stats] = useState<stats>(initial_stats)
 

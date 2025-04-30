@@ -17,7 +17,7 @@ interface grants_page_props {
 }
 
 interface grants_state {
-  data: any[];
+  data: grants_response['grants'];
   loading: boolean;
   error: string | null;
   meta: {
