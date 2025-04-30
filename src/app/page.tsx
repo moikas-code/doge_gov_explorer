@@ -4,22 +4,47 @@ import { useEffect, useState } from 'react'
 import { Navbar } from '@/components/navbar'
 import { Card, CardBody, CardHeader } from '@nextui-org/react'
 import { fetch_all_savings, fetch_payments } from '@/utils/api'
+import { savings_initiative, api_response } from '@/types/api'
 
 interface DashboardStats {
   total_savings: number;
-  recent_payments: number;
-  active_initiatives: number;
-  payments_error: string | null;
+  projected_savings: number;
+  payments: number;
   savings_error: string | null;
+  payments_error: string | null;
+}
+
+interface ChartData {
+  name: string;
+  value: number;
 }
 
 const initial_stats: DashboardStats = {
   total_savings: 0,
-  recent_payments: 0,
-  active_initiatives: 0,
-  payments_error: null,
-  savings_error: null
+  projected_savings: 0,
+  payments: 0,
+  savings_error: null,
+  payments_error: null
 }
+
+const format_chart_data = (data: DashboardStats): ChartData[] => {
+  return [
+    { name: 'Total Savings', value: data.total_savings },
+    { name: 'Projected Savings', value: data.projected_savings },
+  ];
+};
+
+const format_table_data = (data: savings_initiative[]): Record<string, string | number>[] => {
+  return data.map(item => ({
+    id: item.id,
+    description: item.description,
+    amount: item.amount,
+    status: item.status,
+    department: item.department,
+    date: item.date,
+    type: item.type
+  }));
+};
 
 export default function Home() {
   const [stats, set_stats] = useState<DashboardStats>(initial_stats)
@@ -33,62 +58,49 @@ export default function Home() {
         console.log('Fetching data...')
         
         // Fetch data independently to handle partial failures
-        let total_savings = 0
-        let active_initiatives = 0
-        let recent_payments = 0
-        let savings_error = null
-        let payments_error = null
+        let total_savings = 0;
+        let projected_savings = 0;
+        let payments = 0;
+        let savings_error = null;
+        let payments_error = null;
 
         try {
-          const savings_response = await fetch_all_savings()
-          console.log('Savings response:', savings_response)
-
-          if (!savings_response.success) {
-            throw new Error('Failed to fetch savings data')
-          }
-
+          const savings_response = await fetch_all_savings();
+          
           // Calculate total savings
-          total_savings = savings_response.result?.reduce((sum: number, item: any) => sum + (item.savings || 0), 0) || 0
+          total_savings = savings_response.result?.reduce((sum: number, item: any) => sum + (item.savings || 0), 0) || 0;
 
-          // Count verified initiatives
-          active_initiatives = savings_response.result
+          // Calculate projected savings
+          projected_savings = savings_response.result
             ?.filter((item: any) => item.status === 'Verified')
-            .length || 0
+            .reduce((sum: number, item: any) => sum + (item.projected_savings || 0), 0) || 0;
 
         } catch (error) {
-          console.error('Error loading savings:', error)
-          savings_error = error instanceof Error ? error.message : 'Failed to load savings data'
+          savings_error = error instanceof Error ? error.message : 'Failed to fetch savings data';
         }
 
         try {
-          const payments_response = await fetch_payments()
-          console.log('Payments response:', payments_response)
-
-          if (!payments_response.success) {
-            throw new Error('Failed to fetch payments data')
-          }
-
-          // Calculate recent payments (last 30 days)
-          const thirty_days_ago = new Date()
-          thirty_days_ago.setDate(thirty_days_ago.getDate() - 30)
+          const payments_response = await fetch_payments();
+          const thirty_days_ago = new Date();
+          thirty_days_ago.setDate(thirty_days_ago.getDate() - 30);
           
-          recent_payments = payments_response.result?.payments
+          // Calculate payments metrics
+          payments = payments_response.result?.payments
             ?.filter((item: any) => new Date(item.post_date) >= thirty_days_ago)
-            .reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0
+            .reduce((sum: number, item: any) => sum + (item.amount || 0), 0) || 0;
 
         } catch (error) {
-          console.error('Error loading payments:', error)
-          payments_error = error instanceof Error ? error.message : 'Failed to load payments data'
+          payments_error = error instanceof Error ? error.message : 'Failed to fetch payments data';
         }
 
         if (mounted) {
           set_stats({
             total_savings,
-            recent_payments,
-            active_initiatives,
+            projected_savings,
+            payments,
             savings_error,
             payments_error
-          })
+          });
         }
       } finally {
         if (mounted) {
@@ -149,7 +161,7 @@ export default function Home() {
               {stats.payments_error ? (
                 <div className="text-red-600 text-sm">{stats.payments_error}</div>
               ) : (
-                <p className="text-3xl font-bold">${stats.recent_payments.toLocaleString()}</p>
+                <p className="text-3xl font-bold">${stats.payments.toLocaleString()}</p>
               )}
             </CardBody>
           </Card>
@@ -165,7 +177,7 @@ export default function Home() {
               {stats.savings_error ? (
                 <div className="text-red-600 text-sm">{stats.savings_error}</div>
               ) : (
-                <p className="text-3xl font-bold">{stats.active_initiatives}</p>
+                <p className="text-3xl font-bold">{stats.projected_savings}</p>
               )}
             </CardBody>
           </Card>

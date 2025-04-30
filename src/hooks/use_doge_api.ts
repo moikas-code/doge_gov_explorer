@@ -19,7 +19,7 @@ interface use_expenditures_params {
   category?: string;
 }
 
-export function use_savings(params: use_savings_params = {}) {
+export function useSavings(params: use_savings_params = {}) {
   const { page = 1, per_page = 10, status, department } = params;
   let url = `/api/savings?page=${page}&per_page=${per_page}`;
   if (status) url += `&status=${status}`;
@@ -38,7 +38,7 @@ export function use_savings(params: use_savings_params = {}) {
   };
 }
 
-export function use_expenditures(params: use_expenditures_params = {}) {
+export function useExpenditures(params: use_expenditures_params = {}) {
   const { page = 1, per_page = 10, status, department, fiscal_year, category } = params;
   let url = `/api/expenditures?page=${page}&per_page=${per_page}`;
   if (status) url += `&status=${status}`;
@@ -59,7 +59,7 @@ export function use_expenditures(params: use_expenditures_params = {}) {
   };
 }
 
-export function use_stats(fiscal_year?: string, department?: string) {
+export function useStats(fiscal_year?: string, department?: string) {
   let url = '/api/stats';
   if (fiscal_year) url += `?fiscal_year=${fiscal_year}`;
   if (department) url += `${fiscal_year ? '&' : '?'}department=${department}`;

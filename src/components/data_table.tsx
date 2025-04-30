@@ -39,7 +39,88 @@ interface data_table_props<T> {
   render_metadata?: (row: T) => React.ReactNode;
 }
 
-export const data_table = <T extends Record<string, unknown>>({
+const TableColumns = ({ columns, on_sort_change }: { columns: column_def[], on_sort_change?: (key: string, order: SortDirection) => void }) => {
+  const header_columns = [
+    <TableColumn key="expand" className="w-12 md:w-14 min-w-[48px] max-w-[56px]">
+      <span className="sr-only">Expand</span>
+    </TableColumn>,
+    ...columns.map((column) => (
+      <TableColumn
+        key={column.key}
+        allowsSorting={column.sortable !== false && !!on_sort_change}
+        className={`text-xs md:text-sm hover:text-accent-cyan transition-colors ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
+      >
+        {column.label}
+      </TableColumn>
+    ))
+  ];
+  return header_columns;
+};
+
+const TableRows = <T extends Record<string, unknown>>({
+  item,
+  columns,
+  row_index,
+  is_expanded,
+  can_expand,
+  handle_row_expand,
+  render_metadata
+}: {
+  item: T;
+  columns: column_def[];
+  row_index: number | undefined;
+  is_expanded: boolean;
+  can_expand: boolean;
+  handle_row_expand: (index: number) => void;
+  render_metadata?: (row: T) => React.ReactNode;
+}) => {
+  if (is_expanded && can_expand && render_metadata) {
+    return (
+      <TableRow key={`expand-${row_index}`} className="bg-background/60">
+        <TableCell colSpan={columns.length + 1} className="!p-0">
+          <div className="px-4 py-3 md:px-6 md:py-4 border-t border-kawaii-pink/10">
+            {render_metadata(item)}
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  }
+
+  return (
+    <TableRow 
+      key={`row-${row_index}`}
+      className="hover:bg-kawaii-pink/5 transition-colors cursor-pointer"
+      onClick={() => { if (typeof row_index === 'number' && can_expand) handle_row_expand(row_index); }}
+    >
+      <TableCell 
+        key={`expand-cell-${row_index}`} 
+        className="align-top w-12 md:w-14 min-w-[48px] max-w-[56px]"
+      >
+        {can_expand ? (
+          <button
+            aria-label={is_expanded ? 'Collapse row' : 'Expand row'}
+            onClick={e => { e.stopPropagation(); if (typeof row_index === 'number') handle_row_expand(row_index); }}
+            className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded hover:bg-kawaii-pink/10 focus:outline-none"
+          >
+            <ChevronDownIcon className={`w-4 h-4 md:w-5 md:h-5 transition-transform ${is_expanded ? 'rotate-180' : ''}`} />
+          </button>
+        ) : null}
+      </TableCell>
+      {columns.map((column) => (
+        <TableCell 
+          key={`${column.key}-cell-${row_index}`}
+          className={`text-xs md:text-sm ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
+        >
+          {column.render
+            ? column.render(item[column.key], item)
+            : item[column.key]?.toString() || '-'}
+        </TableCell>
+      ))}
+    </TableRow>
+  );
+};
+
+export const DataTable = <T extends Record<string, unknown>>({
   columns,
   data,
   loading,
@@ -70,9 +151,17 @@ export const data_table = <T extends Record<string, unknown>>({
     on_sort_change(descriptor.column, descriptor.direction as SortDirection);
   };
 
+  // Filter out items with unknown values
+  const filtered_data = data.filter(item => {
+    return columns.every(column => {
+      const value = item[column.key];
+      return value !== undefined && value !== null && value !== 'Unknown';
+    });
+  });
+
   // Create a map from item to index for row expansion
   const item_index_map = new Map<T, number>();
-  data.forEach((item, idx) => item_index_map.set(item, idx));
+  filtered_data.forEach((item, idx) => item_index_map.set(item, idx));
 
   return (
     <div className="w-full">
@@ -105,77 +194,47 @@ export const data_table = <T extends Record<string, unknown>>({
           }}
           bottomContentPlacement="outside"
         >
-          <TableHeader>
-            {() => (
-              <>
-                <TableColumn key="expand" className="w-12 md:w-14 min-w-[48px] max-w-[56px]">
+          <TableHeader columns={['expand', ...columns.map(c => c.key)]}>
+            {(columnKey: string) => (
+              <TableColumn
+                key={columnKey}
+                allowsSorting={columnKey !== 'expand' && columns.find(c => c.key === columnKey)?.sortable !== false && !!on_sort_change}
+                className={
+                  columnKey === 'expand'
+                    ? "w-12 md:w-14 min-w-[48px] max-w-[56px]"
+                    : `text-xs md:text-sm hover:text-accent-cyan transition-colors ${columns.find(c => c.key === columnKey)?.min_width ? `min-w-[${columns.find(c => c.key === columnKey)?.min_width}]` : ''}`
+                }
+              >
+                {columnKey === 'expand' ? (
                   <span className="sr-only">Expand</span>
-                </TableColumn>
-                {columns.map((column) => (
-                  <TableColumn
-                    key={column.key}
-                    allowsSorting={column.sortable !== false && !!on_sort_change}
-                    className={`text-xs md:text-sm hover:text-accent-cyan transition-colors ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
-                  >
-                    {column.label}
-                  </TableColumn>
-                ))}
-              </>
+                ) : (
+                  columns.find(c => c.key === columnKey)?.label
+                )}
+              </TableColumn>
             )}
           </TableHeader>
           <TableBody
+            items={filtered_data}
             emptyContent={loading ? <Spinner color="secondary" /> : "No data available"}
             loadingContent={<Spinner color="secondary" />}
             isLoading={loading}
           >
-            {(item: T) => {
-              const row_index = item_index_map.get(item);
+            {(item) => {
+              const typed_item = item as T;
+              const row_index = item_index_map.get(typed_item);
               const is_expanded = typeof row_index === 'number' && expanded_rows.has(row_index);
-              const can_expand = render_metadata && (item.description || item.link || item.fpds_link);
-              
-              if (is_expanded && can_expand) {
-                return (
-                  <TableRow key={`expand-${row_index}`} className="bg-background/60">
-                    <TableCell colSpan={columns.length + 1} className="!p-0">
-                      <div className="px-4 py-3 md:px-6 md:py-4 border-t border-kawaii-pink/10">
-                        {render_metadata(item)}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              }
+              const can_expand = Boolean(render_metadata && (typed_item.description || typed_item.link || typed_item.fpds_link));
               
               return (
-                <TableRow 
-                  key={`row-${row_index}`}
-                  className="hover:bg-kawaii-pink/5 transition-colors cursor-pointer"
-                  onClick={() => { if (typeof row_index === 'number' && can_expand) handle_row_expand(row_index); }}
-                >
-                  <TableCell 
-                    key={`expand-cell-${row_index}`} 
-                    className="align-top w-12 md:w-14 min-w-[48px] max-w-[56px]"
-                  >
-                    {can_expand ? (
-                      <button
-                        aria-label={is_expanded ? 'Collapse row' : 'Expand row'}
-                        onClick={e => { e.stopPropagation(); if (typeof row_index === 'number') handle_row_expand(row_index); }}
-                        className="flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded hover:bg-kawaii-pink/10 focus:outline-none"
-                      >
-                        <ChevronDownIcon className={`w-4 h-4 md:w-5 md:h-5 transition-transform ${is_expanded ? 'rotate-180' : ''}`} />
-                      </button>
-                    ) : null}
-                  </TableCell>
-                  {columns.map((column) => (
-                    <TableCell 
-                      key={`${column.key}-cell-${row_index}`}
-                      className={`text-xs md:text-sm ${column.min_width ? `min-w-[${column.min_width}]` : ''}`}
-                    >
-                      {column.render
-                        ? column.render(item[column.key], item)
-                        : item[column.key]?.toString() || '-'}
-                    </TableCell>
-                  ))}
-                </TableRow>
+                <TableRows
+                  item={typed_item}
+                  columns={columns}
+                  row_index={row_index}
+                  is_expanded={is_expanded}
+                  can_expand={can_expand}
+                  handle_row_expand={handle_row_expand}
+                  render_metadata={render_metadata}
+                />
               );
             }}
           </TableBody>

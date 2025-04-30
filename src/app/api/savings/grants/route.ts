@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetch_grant_savings } from '@/utils/api';
-import type { savings_initiative } from '@/types/api';
+import type { savings_initiative, api_response } from '@/types/api';
 
 interface grant_item {
   date: string;
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     const sort_order = search_params.get('sort_order');
 
     const api_response = await fetch_grant_savings();
-    let filtered_data = [...api_response.result.grants];
+    const filtered_data = [...api_response.result.grants];
 
     // Apply sorting if provided
     if (sort_by && sort_order) {

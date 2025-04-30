@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { data_table as DataTable } from '@/components/data_table';
+import { DataTable } from '@/components/data_table';
 import { api_response, contracts_response } from '@/types/api';
 import { formatCurrency } from '@/utils/format';
 import { ExternalLinkIcon } from '@/components/icons/external_link_icon';

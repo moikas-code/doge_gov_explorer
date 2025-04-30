@@ -1,18 +1,18 @@
 'use client'
 
 import React from 'react'
+import Link from 'next/link'
 import {
   Navbar as NextUINavbar,
   NavbarBrand,
   NavbarContent,
   NavbarItem,
-  Link,
+  Link as NextUILink,
   NavbarMenuToggle,
   NavbarMenu,
   NavbarMenuItem
 } from "@nextui-org/react"
 import { usePathname } from 'next/navigation'
-import Image from 'next/image'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -55,7 +55,7 @@ export function Navbar() {
             isActive={pathname === item.href}
             className="relative group"
           >
-            <Link 
+            <NextUILink 
               color={pathname === item.href ? "primary" : "foreground"} 
               href={item.href}
               className={`w-full transition-colors duration-200 ${
@@ -68,7 +68,7 @@ export function Navbar() {
               <span className={`absolute -bottom-1 left-0 w-0 h-0.5 bg-kawaii-pink transition-all duration-200 ${
                 pathname === item.href ? 'w-full' : 'group-hover:w-full'
               }`} />
-            </Link>
+            </NextUILink>
           </NavbarItem>
         ))}
       </NavbarContent>
@@ -90,7 +90,7 @@ export function Navbar() {
       <NavbarMenu className="bg-background/95 bg-white backdrop-blur-md pt-6">
         {menu_items.map((item) => (
           <NavbarMenuItem key={item.href}>
-            <Link
+            <NextUILink
               color={pathname === item.href ? "primary" : "foreground"}
               className={`w-full text-lg ${
                 pathname === item.href 
@@ -101,7 +101,7 @@ export function Navbar() {
               size="lg"
             >
               {item.name}
-            </Link>
+            </NextUILink>
           </NavbarMenuItem>
         ))}
       </NavbarMenu>

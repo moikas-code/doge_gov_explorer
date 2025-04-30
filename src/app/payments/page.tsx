@@ -1,8 +1,8 @@
 // PaymentsTable.tsx - Client Component
 'use client';
-import { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { data_table as DataTable } from "@/components/data_table";
+import { DataTable } from '@/components/data_table';
 import { payments_response } from "@/types/api";
 import { formatCurrency } from "@/utils/format";
 import { fetch_payments } from '@/utils/api';
