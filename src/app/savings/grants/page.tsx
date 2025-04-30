@@ -38,7 +38,7 @@ async function get_grants(params: grants_page_props['searchParams']) {
   return response.json() as Promise<api_response<grants_response>>;
 }
 
-export default function grants_page({ searchParams }: grants_page_props) {
+export default function GrantsPage({ searchParams }: grants_page_props) {
   const [state, set_state] = useState<grants_state>({
     data: [],
     loading: true,
@@ -71,7 +71,7 @@ export default function grants_page({ searchParams }: grants_page_props) {
     }
 
     load_data();
-  }, [searchParams.page, searchParams.per_page, searchParams.sort_by, searchParams.sort_order]);
+  }, [searchParams]);
 
   const columns = [
     { 

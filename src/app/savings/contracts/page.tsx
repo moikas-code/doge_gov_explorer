@@ -38,7 +38,7 @@ async function get_contracts(params: contracts_page_props['searchParams']) {
   return response.json() as Promise<api_response<contracts_response>>;
 }
 
-export default function contracts_page({ searchParams }: contracts_page_props) {
+export default function ContractsPage({ searchParams }: contracts_page_props) {
   const [state, set_state] = useState<contracts_state>({
     data: [],
     loading: true,
@@ -71,7 +71,7 @@ export default function contracts_page({ searchParams }: contracts_page_props) {
     }
 
     load_data();
-  }, [searchParams.page, searchParams.per_page, searchParams.sort_by, searchParams.sort_order]);
+  }, [searchParams]);
 
   const columns = [
     { key: 'piid', label: 'PIID' },

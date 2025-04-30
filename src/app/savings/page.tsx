@@ -6,15 +6,14 @@ import {
   Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, 
   Card, CardHeader, CardBody, Tabs, Tab, Input, Button, 
   Pagination, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
-  Tooltip, SortDescriptor
+  SortDescriptor
 } from "@nextui-org/react"
 import { 
   fetch_all_savings, 
   fetch_grant_savings, 
   fetch_contract_savings, 
   fetch_lease_savings, 
-  contract_item,
-  contract_response
+  contract_item
 } from '@/utils/api'
 import { savings_initiative } from '@/types/api'
 import { SearchIcon } from '@/components/icons/search_icon'

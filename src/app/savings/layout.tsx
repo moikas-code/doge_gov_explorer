@@ -6,7 +6,7 @@ import { Tabs, Tab, Card } from '@nextui-org/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function savings_layout({
+export default function SavingsLayout({
   children,
 }: {
   children: React.ReactNode;

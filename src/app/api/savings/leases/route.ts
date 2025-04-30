@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const sort_order = search_params.get('sort_order');
 
     const api_response = await fetch_lease_savings();
-    let filtered_data = [...api_response.result.leases];
+    const filtered_data = [...api_response.result.leases];
 
     // Apply sorting if provided
     if (sort_by && sort_order) {

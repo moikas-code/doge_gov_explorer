@@ -24,9 +24,9 @@ interface column_def {
   min_width?: string;
 }
 
-interface data_table_props {
+interface data_table_props<T> {
   columns: column_def[];
-  data: any[];
+  data: T[];
   loading: boolean;
   total_pages: number;
   current_page: number;
@@ -36,10 +36,10 @@ interface data_table_props {
   on_page_change: (page: number) => void;
   on_items_per_page_change: (items: number) => void;
   on_sort_change?: (key: string, order: SortDirection) => void;
-  render_metadata?: (row: any) => React.ReactNode;
+  render_metadata?: (row: T) => React.ReactNode;
 }
 
-export const data_table: React.FC<data_table_props> = ({
+export const data_table = <T extends Record<string, unknown>>({
   columns,
   data,
   loading,
@@ -52,7 +52,7 @@ export const data_table: React.FC<data_table_props> = ({
   on_items_per_page_change,
   on_sort_change,
   render_metadata,
-}) => {
+}: data_table_props<T>) => {
   const [expanded_rows, set_expanded_rows] = useState<Set<number>>(new Set());
 
   const handle_row_expand = (row_index: number) => {
@@ -71,7 +71,7 @@ export const data_table: React.FC<data_table_props> = ({
   };
 
   // Create a map from item to index for row expansion
-  const item_index_map = new Map<any, number>();
+  const item_index_map = new Map<T, number>();
   data.forEach((item, idx) => item_index_map.set(item, idx));
 
   return (
@@ -128,7 +128,7 @@ export const data_table: React.FC<data_table_props> = ({
             loadingContent={<Spinner color="secondary" />}
             isLoading={loading}
           >
-            {(item: any) => {
+            {(item: T) => {
               const row_index = item_index_map.get(item);
               const is_expanded = typeof row_index === 'number' && expanded_rows.has(row_index);
               const can_expand = render_metadata && (item.description || item.link || item.fpds_link);
