@@ -49,7 +49,7 @@ export interface payment_line_item {
   status_description: string | null;
 }
 
-export interface grant_item {
+export interface grant_item extends Record<string, unknown> {
   date: string;
   agency: string;
   recipient: string;
@@ -59,7 +59,7 @@ export interface grant_item {
   description: string | null;
 }
 
-export interface contract_item {
+export interface contract_item extends Record<string, unknown> {
   piid: string;
   agency: string;
   vendor: string;
@@ -71,7 +71,7 @@ export interface contract_item {
   savings: number;
 }
 
-export interface lease_item {
+export interface lease_item extends Record<string, unknown> {
   date: string;
   location: string;
   sq_ft: number;

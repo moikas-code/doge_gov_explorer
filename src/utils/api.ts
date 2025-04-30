@@ -1,22 +1,6 @@
-import { api_response, savings_initiative, payments_response } from '@/types/api';
+import { api_response, savings_initiative, payments_response, contracts_response } from '@/types/api';
 
 const API_BASE_URL = 'https://api.doge.gov';
-
-export interface contract_item {
-  piid: string;
-  agency: string;
-  vendor: string;
-  value: number;
-  description: string;
-  fpds_status: string;
-  fpds_link: string;
-  deleted_date: string;
-  savings: number;
-}
-
-export interface contract_response {
-  contracts: contract_item[];
-}
 
 export interface query_params {
   sort_by?: string;
@@ -79,7 +63,7 @@ export async function fetch_grant_savings(): Promise<api_response<grant_response
   return fetch_api('/savings/grants');
 }
 
-export async function fetch_contract_savings(): Promise<api_response<contract_response>> {
+export async function fetch_contract_savings(): Promise<api_response<contracts_response>> {
   return fetch_api('/savings/contracts');
 }
 

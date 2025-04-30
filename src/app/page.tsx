@@ -28,11 +28,6 @@ interface contract_item {
   link?: string;
 }
 
-interface chart_data {
-  name: string;
-  value: number;
-}
-
 interface stats {
   total_savings: number;
   projected_savings: number;

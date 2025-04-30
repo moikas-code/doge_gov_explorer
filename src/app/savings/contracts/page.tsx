@@ -2,22 +2,24 @@
 
 import React, { useState, useEffect } from 'react';
 import { DataTable } from '@/components/data_table';
-import { api_response, contracts_response } from '@/types/api';
+import { api_response, contracts_response, contract_item } from '@/types/api';
 import { formatCurrency } from '@/utils/format';
 import { ExternalLinkIcon } from '@/components/icons/external_link_icon';
 import { Spinner } from '@nextui-org/react';
 
+interface search_params {
+  page?: string;
+  per_page?: string;
+  sort_by?: string;
+  sort_order?: string;
+}
+
 interface contracts_page_props {
-  searchParams: {
-    page?: string;
-    per_page?: string;
-    sort_by?: string;
-    sort_order?: string;
-  };
+  searchParams: search_params;
 }
 
 interface contracts_state {
-  data: contracts_response['contracts'];
+  data: contract_item[];
   loading: boolean;
   error: string | null;
   meta: {
@@ -25,7 +27,7 @@ interface contracts_state {
   };
 }
 
-async function get_contracts(params: contracts_page_props['searchParams']) {
+async function get_contracts(params: search_params) {
   const search_params = new URLSearchParams();
   if (params.page) search_params.append('page', params.page);
   if (params.per_page) search_params.append('per_page', params.per_page);
@@ -80,14 +82,14 @@ export default function ContractsPage({ searchParams }: contracts_page_props) {
     {
       key: 'value',
       label: 'Value',
-      render: (value: number) => formatCurrency(value)
+      render: (value: unknown) => formatCurrency(value as number)
     },
     { key: 'fpds_status', label: 'FPDS Status' },
     { key: 'deleted_date', label: 'Deleted Date' },
     {
       key: 'savings',
       label: 'Savings',
-      render: (value: number) => formatCurrency(value)
+      render: (value: unknown) => formatCurrency(value as number)
     }
   ];
 
@@ -119,7 +121,7 @@ export default function ContractsPage({ searchParams }: contracts_page_props) {
 
   return (
     <div className="flex flex-col gap-4">
-      <DataTable
+      <DataTable<contract_item>
         columns={columns}
         data={state.data}
         loading={state.loading}
@@ -145,7 +147,7 @@ export default function ContractsPage({ searchParams }: contracts_page_props) {
           url.searchParams.set('sort_order', order);
           window.location.href = url.toString();
         }}
-        render_metadata={(row) => (
+        render_metadata={(row: contract_item) => (
           <div className="flex flex-col gap-2">
             {row.description && (
               <div>

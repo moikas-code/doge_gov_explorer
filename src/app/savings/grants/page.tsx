@@ -77,20 +77,20 @@ export default function GrantsPage({ searchParams }: grants_page_props) {
     { 
       key: 'date', 
       label: 'Date',
-      render: (value: string) => new Date(value).toLocaleDateString()
+      render: (value: unknown) => new Date(value as string).toLocaleDateString()
     },
     { key: 'agency', label: 'Agency' },
     { key: 'recipient', label: 'Recipient' },
     {
       key: 'value',
       label: 'Value',
-      render: (value: number) => formatCurrency(value)
+      render: (value: unknown) => formatCurrency(value as number)
     },
     {
       key: 'savings',
       label: 'Savings',
-      render: (value: number) => formatCurrency(value)
-    },
+      render: (value: unknown) => formatCurrency(value as number)
+    }
   ];
 
   if (state.loading) {
