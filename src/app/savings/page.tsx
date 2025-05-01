@@ -17,7 +17,6 @@ import {
   Input,
   Button,
   Pagination,
-  SortDescriptor,
   Modal,
   ModalContent,
   ModalHeader,

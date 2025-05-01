@@ -1,13 +1,14 @@
 import React from 'react'
 import { 
-  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, 
-  Pagination, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
-  Button, SortDescriptor
+  Table, 
+  TableHeader, 
+  TableColumn, 
+  TableBody, 
+  TableRow, 
+  TableCell, 
+  Pagination
 } from "@nextui-org/react"
 import { lease_item } from '@/types/api'
-import { ChevronDownIcon } from '@/components/icons/chevron_down_icon'
-import { ExternalLinkIcon } from '@/components/icons/external_link_icon'
-import { VerticalDotsIcon } from '@/components/icons/vertical_dots_icon'
 
 interface LeaseTableProps {
   data: lease_item[];
