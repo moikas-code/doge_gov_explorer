@@ -13,10 +13,6 @@ interface search_params {
   sort_order?: string;
 }
 
-interface leases_page_props {
-  searchParams: search_params;
-}
-
 interface leases_state {
   data: lease_item[];
   loading: boolean;
@@ -39,7 +35,11 @@ async function get_leases(params: search_params) {
   return response.json() as Promise<api_response<leases_response>>;
 }
 
-export default function LeasesPage({ searchParams }: leases_page_props) {
+export default function LeasesPage({
+  searchParams = {}
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined }
+}) {
   const [state, set_state] = useState<leases_state>({
     data: [],
     loading: true,
@@ -47,14 +47,24 @@ export default function LeasesPage({ searchParams }: leases_page_props) {
     meta: { pages: 1 }
   });
 
-  const current_page = parseInt(searchParams.page || '1');
-  const items_per_page = parseInt(searchParams.per_page || '500');
+  const current_page = parseInt(
+    Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page || '1'
+  );
+  const items_per_page = parseInt(
+    Array.isArray(searchParams.per_page) ? searchParams.per_page[0] : searchParams.per_page || '500'
+  );
 
   useEffect(() => {
     async function load_data() {
       try {
         set_state(prev => ({ ...prev, loading: true, error: null }));
-        const { result, meta } = await get_leases(searchParams);
+        const params: search_params = {
+          page: Array.isArray(searchParams.page) ? searchParams.page[0] : searchParams.page,
+          per_page: Array.isArray(searchParams.per_page) ? searchParams.per_page[0] : searchParams.per_page,
+          sort_by: Array.isArray(searchParams.sort_by) ? searchParams.sort_by[0] : searchParams.sort_by,
+          sort_order: Array.isArray(searchParams.sort_order) ? searchParams.sort_order[0] : searchParams.sort_order
+        };
+        const { result, meta } = await get_leases(params);
         set_state({
           data: result.leases,
           loading: false,
@@ -130,8 +140,11 @@ export default function LeasesPage({ searchParams }: leases_page_props) {
         total_pages={state.meta.pages}
         current_page={current_page}
         items_per_page={items_per_page}
-        sort_by={searchParams.sort_by}
-        sort_order={searchParams.sort_order as 'ascending' | 'descending' | undefined}
+        sort_by={Array.isArray(searchParams.sort_by) ? searchParams.sort_by[0] : searchParams.sort_by}
+        sort_order={(() => {
+          const order = Array.isArray(searchParams.sort_order) ? searchParams.sort_order[0] : searchParams.sort_order;
+          return (order === 'ascending' || order === 'descending') ? order : undefined;
+        })()}
         on_page_change={(page: number) => {
           const url = new URL(window.location.href);
           url.searchParams.set('page', page.toString());

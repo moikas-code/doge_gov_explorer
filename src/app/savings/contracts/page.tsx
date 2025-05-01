@@ -14,10 +14,6 @@ interface search_params {
   sort_order?: string;
 }
 
-interface contracts_page_props {
-  searchParams: { [key: string]: string | string[] | undefined };
-}
-
 interface contracts_state {
   data: contract_item[];
   loading: boolean;
@@ -40,7 +36,11 @@ async function get_contracts(params: search_params) {
   return response.json() as Promise<api_response<contracts_response>>;
 }
 
-export default function ContractsPage({ searchParams }: contracts_page_props) {
+export default function ContractsPage({
+  searchParams = {}
+}: {
+  searchParams?: { [key: string]: string | string[] | undefined }
+}) {
   const [state, set_state] = useState<contracts_state>({
     data: [],
     loading: true,
