@@ -141,7 +141,6 @@ export default function SavingsPage() {
   const rows_per_page = 10;
   const [selected_contract, set_selected_contract] =
     useState<normalized_contract | null>(null);
-  const [selected_grant, set_selected_grant] = useState<grant_item | null>(null);
  
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
@@ -226,7 +225,7 @@ export default function SavingsPage() {
     .filter((item): item is grant_item => {
       if (selected_type !== "grants") return false;
       if (!item || typeof item !== "object") return false;
-      const obj = item as any;
+      const obj = item as Record<string, unknown>;
       return (
         "date" in obj &&
         typeof obj.date === "string" &&
@@ -768,7 +767,6 @@ export default function SavingsPage() {
                         <TableRow
                           className="group cursor-pointer hover:bg-default-100/50 transition-colors"
                           onClick={() => {
-                            set_selected_grant(grant);
                             onOpen();
                           }}
                         >

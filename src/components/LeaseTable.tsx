@@ -9,27 +9,23 @@ import { ChevronDownIcon } from '@/components/icons/chevron_down_icon'
 import { ExternalLinkIcon } from '@/components/icons/external_link_icon'
 import { VerticalDotsIcon } from '@/components/icons/vertical_dots_icon'
 
-interface lease_table_props {
-  data: any[]
-  current_page: number
-  total_pages: number
-  sort_descriptor: SortDescriptor
-  expanded_rows: Set<string>
-  on_sort_change: (descriptor: SortDescriptor) => void
-  on_page_change: (page: number) => void
-  on_row_expand: (id: string) => void
+interface LeaseTableProps {
+  data: lease_item[];
+  current_page: number;
+  total_pages: number;
+  expanded_rows: Set<string>;
+  on_page_change: (page: number) => void;
+  on_row_expand: (id: string) => void;
 }
 
 export function LeaseTable({
   data,
   current_page,
   total_pages,
-  sort_descriptor,
   expanded_rows,
-  on_sort_change,
   on_page_change,
-  on_row_expand
-}: lease_table_props) {
+  on_row_expand,
+}: LeaseTableProps) {
   const lease_data = data
     .filter((item): item is lease_item => {
       if (!item || typeof item !== 'object') return false

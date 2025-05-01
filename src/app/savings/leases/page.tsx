@@ -39,7 +39,7 @@ async function get_leases(params: search_params) {
   return response.json() as Promise<api_response<leases_response>>;
 }
 
-export default function leases_page({ searchParams }: leases_page_props) {
+export default function LeasesPage({ searchParams }: leases_page_props) {
   const [state, set_state] = useState<leases_state>({
     data: [],
     loading: true,
