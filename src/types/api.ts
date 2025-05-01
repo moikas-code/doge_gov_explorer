@@ -8,6 +8,7 @@ export interface savings_initiative {
   link?: string;
   description?: string;
   type: string;
+  savings: number;
 }
 
 export interface expenditure {

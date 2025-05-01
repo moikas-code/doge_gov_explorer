@@ -1,27 +1,47 @@
-'use client'
+"use client";
 
-import React from 'react'
-import { useEffect, useState } from 'react'
-import { 
-  Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, 
-  Card, CardHeader, CardBody, Tabs, Tab, Input, Button, 
-  Pagination, Dropdown, DropdownTrigger, DropdownMenu, DropdownItem,
-  SortDescriptor, Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, useDisclosure
-} from "@nextui-org/react"
-import { 
-  fetch_all_savings, 
-  fetch_grant_savings, 
-  fetch_contract_savings, 
-  fetch_lease_savings
-} from '@/utils/api'
-import { savings_initiative, lease_item, contract_item, grant_item } from '@/types/api'
-import { SearchIcon } from '@/components/icons/search_icon'
-import { ChevronDownIcon } from '@/components/icons/chevron_down_icon'
-import { ExternalLinkIcon } from '@/components/icons/external_link_icon'
-import { VerticalDotsIcon } from '@/components/icons/vertical_dots_icon'
-import { LeaseTable } from '@/components/LeaseTable'
+import React from "react";
+import { useEffect, useState } from "react";
+import {
+  Table,
+  TableHeader,
+  TableColumn,
+  TableBody,
+  TableRow,
+  TableCell,
+  Card,
+  CardHeader,
+  CardBody,
+  Tabs,
+  Tab,
+  Input,
+  Button,
+  Pagination,
+  SortDescriptor,
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+} from "@nextui-org/react";
+import {
+  fetch_all_savings,
+  fetch_grant_savings,
+  fetch_contract_savings,
+  fetch_lease_savings,
+} from "@/utils/api";
+import {
+  savings_initiative,
+  lease_item,
+  contract_item,
+  grant_item,
+} from "@/types/api";
+import { SearchIcon } from "@/components/icons/search_icon";
+import { ExternalLinkIcon } from "@/components/icons/external_link_icon";
+import { LeaseTable } from "@/components/LeaseTable";
 
-type savings_type = 'all' | 'grants' | 'contracts' | 'leases'
+type savings_type = "all" | "grants" | "contracts" | "leases";
 
 // Create a unique ID generator
 let id_counter = 0;
@@ -44,7 +64,7 @@ interface savings_base {
 type normalized_savings = savings_base & {
   id: string;
   type: string;
-}
+};
 
 type normalized_contract = {
   id: string;
@@ -57,8 +77,8 @@ type normalized_contract = {
   fpds_link: string | null;
   deleted_date: string | null;
   savings: number;
-  type: 'Contract';
-}
+  type: "Contract";
+};
 
 interface savings_state {
   data: (normalized_savings | normalized_contract | grant_item)[];
@@ -71,26 +91,26 @@ const initial_state: savings_state = {
   data: [],
   lease_data: [],
   error: null,
-  loading: true
-}
+  loading: true,
+};
 
 function normalize_savings_item(item: savings_initiative): normalized_savings {
   return {
-    id: item.id || generate_unique_id('savings'),
-    savings: item.amount || 0,
+    id: item.id || generate_unique_id("savings"),
+    savings: item?.savings || 0,
     date: item.date || new Date().toISOString(),
-    agency: item.agency || 'Unknown',
-    recipient: item.recipient || 'Unknown',
+    agency: item.agency || "Unknown",
+    recipient: item.recipient || "Unknown",
     value: item.value || 0,
     link: item.link,
     description: item.description,
-    type: item.type || 'Unknown'
-  }
+    type: item.type || "Unknown",
+  };
 }
 
 function normalize_contract_item(item: contract_item): normalized_contract {
   return {
-    id: item.piid || generate_unique_id('contract'),
+    id: item.piid || generate_unique_id("contract"),
     piid: item.piid,
     agency: item.agency,
     vendor: item.vendor,
@@ -100,106 +120,134 @@ function normalize_contract_item(item: contract_item): normalized_contract {
     fpds_link: item.fpds_link,
     deleted_date: item.deleted_date,
     savings: item.savings,
-    type: 'Contract'
-  }
+    type: "Contract",
+  };
 }
 
 export default function SavingsPage() {
-  const [state, set_state] = useState<savings_state>(initial_state)
-  const [total_savings, set_total_savings] = useState(0)
-  const [monthly_improvement, set_monthly_improvement] = useState(0)
-  const [selected_type, set_selected_type] = useState<savings_type>('all')
-  const [search_query, set_search_query] = useState('')
-  const [current_page, set_current_page] = useState(1)
-  const [expanded_rows, set_expanded_rows] = useState<Set<string>>(new Set([]))
-  const [sort_field, set_sort_field] = useState<'savings' | 'value' | 'deleted_date' | null>(null)
-  const [sort_direction, set_sort_direction] = useState<'ascending' | 'descending'>('descending')
-  const rows_per_page = 10
-  const [selected_contract, set_selected_contract] = useState<normalized_contract | null>(null)
-  const [selected_grant, set_selected_grant] = useState<grant_item | null>(null)
-  const {isOpen, onOpen, onOpenChange} = useDisclosure()
+  const [state, set_state] = useState<savings_state>(initial_state);
+  const [total_savings, set_total_savings] = useState(0);
+  const [monthly_improvement, set_monthly_improvement] = useState(0);
+  const [selected_type, set_selected_type] = useState<savings_type>("all");
+  const [search_query, set_search_query] = useState("");
+  const [current_page, set_current_page] = useState(1);
+  const [expanded_rows, set_expanded_rows] = useState<Set<string>>(new Set([]));
+  const [sort_field, set_sort_field] = useState<
+    "savings" | "value" | "deleted_date" | null
+  >(null);
+  const [sort_direction, set_sort_direction] = useState<
+    "ascending" | "descending"
+  >("descending");
+  const rows_per_page = 10;
+  const [selected_contract, set_selected_contract] =
+    useState<normalized_contract | null>(null);
+  const [selected_grant, set_selected_grant] = useState<grant_item | null>(null);
+ 
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   // Filter and sort data
   const filtered_data = state.data
-    .filter(item => {
-      if (selected_type !== 'contracts') return false;
-      if (!('type' in item) || item.type !== 'Contract') return false;
+    .filter((item) => {
+      if (selected_type === "grants" || selected_type === "leases") return false;
       
       const search_text = search_query.toLowerCase();
-      const contract = item as normalized_contract;
       
+      if (selected_type === "contracts") {
+        if (!("type" in item) || item.type !== "Contract") return false;
+        const contract = item as normalized_contract;
+        return (
+          (contract.agency || "").toLowerCase().includes(search_text) ||
+          (contract.vendor || "").toLowerCase().includes(search_text) ||
+          (contract.fpds_status || "").toLowerCase().includes(search_text) ||
+          (contract.piid || "").toLowerCase().includes(search_text)
+        );
+      }
+      
+      // All view
       return (
-        (contract.agency || '').toLowerCase().includes(search_text) ||
-        (contract.vendor || '').toLowerCase().includes(search_text) ||
-        (contract.fpds_status || '').toLowerCase().includes(search_text) ||
-        (contract.piid || '').toLowerCase().includes(search_text)
+        (item.agency || "").toLowerCase().includes(search_text) ||
+        (("recipient" in item && item.recipient || "").toLowerCase().includes(search_text)) ||
+        (("description" in item && item.description || "").toLowerCase().includes(search_text))
       );
     })
     .sort((a, b) => {
-      if (!('type' in a) || !('type' in b) || a.type !== 'Contract' || b.type !== 'Contract') return 0;
-      
+      if (
+        !("type" in a) ||
+        !("type" in b) ||
+        a.type !== "Contract" ||
+        b.type !== "Contract"
+      )
+        return 0;
+
       const contract_a = a as normalized_contract;
       const contract_b = b as normalized_contract;
       const multiplier = sort_direction === "descending" ? -1 : 1;
-      
+
       switch (sort_field) {
         case "savings":
-          return ((contract_a.savings || 0) - (contract_b.savings || 0)) * multiplier;
+          return (
+            ((contract_a.savings || 0) - (contract_b.savings || 0)) * multiplier
+          );
         case "value":
-          return ((contract_a.value || 0) - (contract_b.value || 0)) * multiplier;
+          return (
+            ((contract_a.value || 0) - (contract_b.value || 0)) * multiplier
+          );
         case "deleted_date":
-          const date_a = contract_a.deleted_date ? new Date(contract_a.deleted_date).getTime() : 0;
-          const date_b = contract_b.deleted_date ? new Date(contract_b.deleted_date).getTime() : 0;
+          const date_a = contract_a.deleted_date
+            ? new Date(contract_a.deleted_date).getTime()
+            : 0;
+          const date_b = contract_b.deleted_date
+            ? new Date(contract_b.deleted_date).getTime()
+            : 0;
           return (date_a - date_b) * multiplier;
         default:
           return 0;
       }
     });
 
-  const sorted_lease_data = state.lease_data
-    .sort((a, b) => {
-      const multiplier = sort_direction === "descending" ? -1 : 1;
-      
-      switch (sort_field) {
-        case "savings":
-          return ((a.savings || 0) - (b.savings || 0)) * multiplier;
-        case "value":
-          return ((a.sq_ft || 0) - (b.sq_ft || 0)) * multiplier;
-        case "deleted_date":
-          const date_a = a.date ? new Date(a.date).getTime() : 0;
-          const date_b = b.date ? new Date(b.date).getTime() : 0;
-          return (date_a - date_b) * multiplier;
-        default:
-          return 0;
-      }
-    });
+  const sorted_lease_data = state.lease_data.sort((a, b) => {
+    const multiplier = sort_direction === "descending" ? -1 : 1;
+
+    switch (sort_field) {
+      case "savings":
+        return ((a.savings || 0) - (b.savings || 0)) * multiplier;
+      case "value":
+        return ((a.sq_ft || 0) - (b.sq_ft || 0)) * multiplier;
+      case "deleted_date":
+        const date_a = a.date ? new Date(a.date).getTime() : 0;
+        const date_b = b.date ? new Date(b.date).getTime() : 0;
+        return (date_a - date_b) * multiplier;
+      default:
+        return 0;
+    }
+  });
 
   const sorted_grants_data = state.data
     .filter((item): item is grant_item => {
-      if (selected_type !== 'grants') return false;
-      if (!item || typeof item !== 'object') return false;
+      if (selected_type !== "grants") return false;
+      if (!item || typeof item !== "object") return false;
       const obj = item as any;
       return (
-        'date' in obj && 
-        typeof obj.date === 'string' &&
-        'agency' in obj && 
-        typeof obj.agency === 'string' &&
-        'recipient' in obj && 
-        typeof obj.recipient === 'string' &&
-        'value' in obj && 
-        typeof obj.value === 'number' &&
-        'savings' in obj &&
-        typeof obj.savings === 'number'
+        "date" in obj &&
+        typeof obj.date === "string" &&
+        "agency" in obj &&
+        typeof obj.agency === "string" &&
+        "recipient" in obj &&
+        typeof obj.recipient === "string" &&
+        "value" in obj &&
+        typeof obj.value === "number" &&
+        "savings" in obj &&
+        typeof obj.savings === "number"
       );
     })
     .sort((a, b) => {
       const multiplier = sort_direction === "descending" ? -1 : 1;
-      
+
       switch (sort_field) {
         case "savings":
           return ((a.savings || 0) - (b.savings || 0)) * multiplier;
-        case "value":
-          return ((a.value || 0) - (b.value || 0)) * multiplier;
+        // case "value":
+        //   return ((a.value || 0) - (b.value || 0)) * multiplier;
         case "deleted_date":
           const date_a = a.date ? new Date(a.date).getTime() : 0;
           const date_b = b.date ? new Date(b.date).getTime() : 0;
@@ -209,177 +257,202 @@ export default function SavingsPage() {
       }
     });
 
-  const total_pages = Math.ceil(filtered_data.length / rows_per_page)
-  const start_index = (current_page - 1) * rows_per_page
-  const paginated_data = filtered_data.slice(start_index, start_index + rows_per_page)
+  const total_pages = Math.ceil(filtered_data.length / rows_per_page);
+  const start_index = (current_page - 1) * rows_per_page;
+  const paginated_data = filtered_data.slice(
+    start_index,
+    start_index + rows_per_page
+  );
 
   const handle_row_expand = (id: string) => {
-    const new_expanded_rows = new Set(expanded_rows)
+    const new_expanded_rows = new Set(expanded_rows);
     if (expanded_rows.has(id)) {
-      new_expanded_rows.delete(id)
+      new_expanded_rows.delete(id);
     } else {
-      new_expanded_rows.add(id)
+      new_expanded_rows.add(id);
     }
-    set_expanded_rows(new_expanded_rows)
-  }
+    set_expanded_rows(new_expanded_rows);
+  };
 
   const truncate_text = (text: string, length: number) => {
-    if (!text) return '-';
+    if (!text) return "-";
     return text.length > length ? `${text.substring(0, length)}...` : text;
-  }
+  };
 
   useEffect(() => {
     async function load_data() {
       try {
-        set_state(prev => ({ ...prev, loading: true, error: null }))
-        let data: (normalized_savings | normalized_contract | grant_item)[] = []
-        let lease_data: lease_item[] = []
-        
+        set_state((prev) => ({ ...prev, loading: true, error: null }));
+        let data: (normalized_savings | normalized_contract | grant_item)[] =
+          [];
+        let lease_data: lease_item[] = [];
+
         switch (selected_type) {
-          case 'grants': {
-            const response = await fetch_grant_savings()
-            if (!response.success) throw new Error('Failed to fetch grants data')
+          case "grants": {
+            const response = await fetch_grant_savings();
+            if (!response.success)
+              throw new Error("Failed to fetch grants data");
             data = (response.result?.grants || [])
-              .filter(item => item !== null && item !== undefined)
-              .map(normalize_savings_item)
-            break
+              .filter((item) => item !== null && item !== undefined)
+              .map(normalize_savings_item);
+            break;
           }
-          case 'contracts': {
-            const response = await fetch_contract_savings()
-            if (!response.success) throw new Error('Failed to fetch contracts data')
+          case "contracts": {
+            const response = await fetch_contract_savings();
+            if (!response.success)
+              throw new Error("Failed to fetch contracts data");
             data = (response.result?.contracts || [])
-              .filter((item): item is contract_item => 
-                item !== null && 
-                item !== undefined && 
-                'piid' in item && 
-                'agency' in item
+              .filter(
+                (item): item is contract_item =>
+                  item !== null &&
+                  item !== undefined &&
+                  "piid" in item &&
+                  "agency" in item
               )
-              .map(normalize_contract_item)
-            break
+              .map(normalize_contract_item);
+            break;
           }
-          case 'leases': {
-            const response = await fetch_lease_savings()
-            if (!response.success) throw new Error('Failed to fetch leases data')
-            const raw_leases = response.result?.leases || []
-            lease_data = raw_leases as unknown as lease_item[]
-            break
+          case "leases": {
+            const response = await fetch_lease_savings();
+            if (!response.success)
+              throw new Error("Failed to fetch leases data");
+            const raw_leases = response.result?.leases || [];
+            lease_data = raw_leases as unknown as lease_item[];
+            break;
           }
           default: {
-            const response = await fetch_all_savings()
-            if (!response.success) throw new Error('Failed to fetch savings data')
+            const response = await fetch_all_savings();
+            if (!response.success)
+              throw new Error("Failed to fetch savings data");
             data = (response.result || [])
-              .filter((item): item is savings_initiative => 
-                item !== null && 
-                item !== undefined && 
-                'id' in item && 
-                'amount' in item && 
-                'type' in item
+              .filter(
+                (item): item is savings_initiative =>
+                  item !== null &&
+                  item !== undefined &&
+                  "id" in item &&
+                  "amount" in item &&
+                  "type" in item
               )
-              .map(normalize_savings_item)
+              .map(normalize_savings_item);
           }
         }
 
         // Filter out any items that might have slipped through with invalid data
-        data = data.filter(item => 
-          item !== null && 
-          item !== undefined && 
-          typeof item.savings === 'number' &&
-          (
-            (item.type === 'Contract' && typeof item.deleted_date === 'string' && item.deleted_date.length > 0) ||
-            (item.type !== 'Contract' && typeof item.date === 'string' && item.date.length > 0)
-          )
+        data = data.filter(
+          (item) =>
+            item !== null &&
+            item !== undefined &&
+            typeof item.savings === "number" &&
+            (("type" in item && item.type === "Contract" && "deleted_date" in item && typeof item.deleted_date === "string" && item.deleted_date.length > 0) ||
+            ("type" in item && item.type !== "Contract" && "date" in item && typeof item.date === "string" && item.date.length > 0))
         );
 
-        lease_data = lease_data.filter(item =>
-          item !== null &&
-          item !== undefined &&
-          typeof item.savings === 'number' &&
-          typeof item.date === 'string' &&
-          item.date.length > 0 &&
-          typeof item.location === 'string' &&
-          typeof item.sq_ft === 'number' &&
-          typeof item.agency === 'string'
+        lease_data = lease_data.filter(
+          (item) =>
+            item !== null &&
+            item !== undefined &&
+            typeof item.savings === "number" &&
+            typeof item.date === "string" &&
+            item.date.length > 0 &&
+            typeof item.location === "string" &&
+            typeof item.sq_ft === "number" &&
+            typeof item.agency === "string"
         );
 
-        set_state({ data, lease_data, loading: false, error: null })
+        set_state({ data, lease_data, loading: false, error: null });
 
         // Calculate total savings with null check
-        const total = [...data, ...lease_data].reduce((sum, item) => sum + (item?.savings || 0), 0);
+        const total = [...data, ...lease_data].reduce(
+          (sum, item) => sum + (item?.savings || 0),
+          0
+        );
         set_total_savings(total);
-        
+
         // Calculate monthly improvement with null checks
         const current_month = new Date().getMonth();
         const current_year = new Date().getFullYear();
-        
+
         const all_items = [...data, ...lease_data];
         const this_month_savings = all_items
-          .filter(item => {
+          .filter((item) => {
             try {
-              const date_str = item.type === 'Contract' ? 
-                (item as normalized_contract).deleted_date : 
-                (item as normalized_savings).date;
+              const date_str =
+                item.type === "Contract"
+                  ? (item as normalized_contract).deleted_date
+                  : (item as normalized_savings).date;
               if (!date_str) return false;
-              
+
               const date = new Date(date_str);
-              return !isNaN(date.getTime()) && 
-                     date.getMonth() === current_month && 
-                     date.getFullYear() === current_year;
+              return (
+                !isNaN(date.getTime()) &&
+                date.getMonth() === current_month &&
+                date.getFullYear() === current_year
+              );
             } catch {
               return false;
             }
           })
           .reduce((sum, item) => sum + (item?.savings || 0), 0);
-          
+
         const last_month_savings = all_items
-          .filter(item => {
+          .filter((item) => {
             try {
-              const date_str = item.type === 'Contract' ? 
-                (item as normalized_contract).deleted_date : 
-                (item as normalized_savings).date;
+              const date_str =
+                item.type === "Contract"
+                  ? (item as normalized_contract).deleted_date
+                  : (item as normalized_savings).date;
               if (!date_str) return false;
-              
+
               const date = new Date(date_str);
-              return !isNaN(date.getTime()) && 
-                     date.getMonth() === (current_month - 1) && 
-                     date.getFullYear() === current_year;
+              return (
+                !isNaN(date.getTime()) &&
+                date.getMonth() === current_month - 1 &&
+                date.getFullYear() === current_year
+              );
             } catch {
               return false;
             }
           })
           .reduce((sum, item) => sum + (item?.savings || 0), 0);
-          
-        set_monthly_improvement(this_month_savings - last_month_savings)
+
+        set_monthly_improvement(this_month_savings - last_month_savings);
       } catch (error) {
-        console.error('Error loading savings data:', error)
-        set_state({ 
+        console.error("Error loading savings data:", error);
+        set_state({
           data: [],
           lease_data: [],
-          error: error instanceof Error ? error.message : 'An unexpected error occurred',
-          loading: false 
-        })
+          error:
+            error instanceof Error
+              ? error.message
+              : "An unexpected error occurred",
+          loading: false,
+        });
       }
     }
-    
-    load_data()
-  }, [selected_type])
+
+    load_data();
+  }, [selected_type]);
 
   if (state.loading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <p>Loading...</p>
       </div>
-    )
+    );
   }
 
   if (state.error) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+          role="alert"
+        >
           <strong className="font-bold">Error: </strong>
           <span className="block sm:inline">{state.error}</span>
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -408,8 +481,13 @@ export default function SavingsPage() {
             <h2 className="text-xl font-bold">Monthly Improvement</h2>
           </CardHeader>
           <CardBody className="py-6">
-            <p className={`text-4xl font-bold ${(monthly_improvement || 0) >= 0 ? 'text-success' : 'text-danger'}`}>
-              {(monthly_improvement || 0) >= 0 ? '+' : ''}{(monthly_improvement || 0).toLocaleString()}
+            <p
+              className={`text-4xl font-bold ${
+                (monthly_improvement || 0) >= 0 ? "text-success" : "text-danger"
+              }`}
+            >
+              {(monthly_improvement || 0) >= 0 ? "+" : ""}
+              {(monthly_improvement || 0).toLocaleString()}
             </p>
             <p className="text-sm text-default-500 mt-2">
               Compared to last month
@@ -423,55 +501,73 @@ export default function SavingsPage() {
           <h2 className="text-2xl font-bold">Savings Initiatives</h2>
           <div className="flex gap-2">
             <Button
-              color={sort_field === 'savings' ? 'primary' : 'default'}
-              variant={sort_field === 'savings' ? 'solid' : 'light'}
+              color={sort_field === "savings" ? "primary" : "default"}
+              variant={sort_field === "savings" ? "solid" : "light"}
               onClick={() => {
-                if (sort_field === 'savings') {
-                  set_sort_direction(prev => prev === 'ascending' ? 'descending' : 'ascending')
+                if (sort_field === "savings") {
+                  set_sort_direction((prev) =>
+                    prev === "ascending" ? "descending" : "ascending"
+                  );
                 } else {
-                  set_sort_field('savings')
-                  set_sort_direction('descending')
+                  set_sort_field("savings");
+                  set_sort_direction("descending");
                 }
               }}
-              endContent={sort_field === 'savings' && (
-                <span className="ml-1">{sort_direction === 'ascending' ? '↑' : '↓'}</span>
-              )}
+              endContent={
+                sort_field === "savings" && (
+                  <span className="ml-1">
+                    {sort_direction === "ascending" ? "↑" : "↓"}
+                  </span>
+                )
+              }
             >
               Sort by Savings
             </Button>
-            {selected_type !== 'grants' && (
+            {selected_type !== "grants" && (
               <Button
-                color={sort_field === 'value' ? 'primary' : 'default'}
-                variant={sort_field === 'value' ? 'solid' : 'light'}
+                color={sort_field === "savings" ? "primary" : "default"}
+                variant={sort_field === "savings" ? "solid" : "light"}
                 onClick={() => {
-                  if (sort_field === 'value') {
-                    set_sort_direction(prev => prev === 'ascending' ? 'descending' : 'ascending')
+                  if (sort_field === "savings") {
+                    set_sort_direction((prev) =>
+                      prev === "ascending" ? "descending" : "ascending"
+                    );
                   } else {
-                    set_sort_field('value')
-                    set_sort_direction('descending')
+                    set_sort_field("savings");
+                    set_sort_direction("descending");
                   }
                 }}
-                endContent={sort_field === 'value' && (
-                  <span className="ml-1">{sort_direction === 'ascending' ? '↑' : '↓'}</span>
-                )}
+                endContent={
+                  sort_field === "savings" && (
+                    <span className="ml-1">
+                      {sort_direction === "ascending" ? "↑" : "↓"}
+                    </span>
+                  )
+                }
               >
-                {selected_type === 'leases' ? 'Sort by Sq Ft' : 'Sort by Value'}
+                {selected_type === "leases" ? "Sort by Sq Ft" : "Sort by Value"}
               </Button>
             )}
             <Button
-              color={sort_field === 'deleted_date' ? 'primary' : 'default'}
-              variant={sort_field === 'deleted_date' ? 'solid' : 'light'}
+              color={sort_field === "deleted_date" ? "primary" : "default"}
+              variant={sort_field === "deleted_date" ? "solid" : "light"}
               onClick={() => {
-                if (sort_field === 'deleted_date') {
-                  set_sort_direction(prev => prev === 'ascending' ? 'descending' : 'ascending')
+                if (sort_field === "deleted_date") {
+                  set_sort_direction((prev) =>
+                    prev === "ascending" ? "descending" : "ascending"
+                  );
                 } else {
-                  set_sort_field('deleted_date')
-                  set_sort_direction('descending')
+                  set_sort_field("deleted_date");
+                  set_sort_direction("descending");
                 }
               }}
-              endContent={sort_field === 'deleted_date' && (
-                <span className="ml-1">{sort_direction === 'ascending' ? '↑' : '↓'}</span>
-              )}
+              endContent={
+                sort_field === "deleted_date" && (
+                  <span className="ml-1">
+                    {sort_direction === "ascending" ? "↑" : "↓"}
+                  </span>
+                )
+              }
             >
               Sort by Date
             </Button>
@@ -486,33 +582,35 @@ export default function SavingsPage() {
               size="lg"
               classNames={{
                 input: "text-base",
-                inputWrapper: "h-12 bg-default-100/50"
+                inputWrapper: "h-12 bg-default-100/50",
               }}
             />
           </div>
         </div>
-        <Tabs 
-          selectedKey={selected_type} 
+        <Tabs
+          selectedKey={selected_type}
           onSelectionChange={(key) => {
-            set_selected_type(key as savings_type)
-            set_current_page(1)
-            set_search_query('')
-            set_sort_field(null)
-            set_sort_direction('descending')
+            set_selected_type(key as savings_type);
+            set_current_page(1);
+            set_search_query("");
+            set_sort_field(null);
+            set_sort_direction("descending");
           }}
           classNames={{
             tab: "h-12 px-8 cursor-pointer",
-            tabContent: "group-data-[selected=true]:text-kawaii-pink font-semibold text-base",
+            tabContent:
+              "group-data-[selected=true]:text-kawaii-pink font-semibold text-base",
             cursor: "bg-kawaii-gradient",
-            tabList: "gap-6 w-full relative rounded-none p-0 border-b border-divider overflow-x-auto"
+            tabList:
+              "gap-6 w-full relative rounded-none p-0 border-b border-divider overflow-x-auto",
           }}
         >
-          <Tab 
-            key="all" 
+          <Tab
+            key="all"
             title={
               <div className="flex items-center gap-2">
                 <span>All Savings</span>
-                {selected_type === 'all' && (
+                {selected_type === "all" && (
                   <span className="px-2 py-1 text-xs bg-kawaii-pink/10 rounded-full">
                     {filtered_data.length}
                   </span>
@@ -520,12 +618,12 @@ export default function SavingsPage() {
               </div>
             }
           />
-          <Tab 
-            key="grants" 
+          <Tab
+            key="grants"
             title={
               <div className="flex items-center gap-2">
                 <span>Grants</span>
-                {selected_type === 'grants' && (
+                {selected_type === "grants" && (
                   <span className="px-2 py-1 text-xs bg-kawaii-pink/10 rounded-full">
                     {filtered_data.length}
                   </span>
@@ -533,12 +631,12 @@ export default function SavingsPage() {
               </div>
             }
           />
-          <Tab 
-            key="contracts" 
+          <Tab
+            key="contracts"
             title={
               <div className="flex items-center gap-2">
                 <span>Contracts</span>
-                {selected_type === 'contracts' && (
+                {selected_type === "contracts" && (
                   <span className="px-2 py-1 text-xs bg-kawaii-pink/10 rounded-full">
                     {filtered_data.length}
                   </span>
@@ -546,12 +644,12 @@ export default function SavingsPage() {
               </div>
             }
           />
-          <Tab 
-            key="leases" 
+          <Tab
+            key="leases"
             title={
               <div className="flex items-center gap-2">
                 <span>Leases</span>
-                {selected_type === 'leases' && (
+                {selected_type === "leases" && (
                   <span className="px-2 py-1 text-xs bg-kawaii-pink/10 rounded-full">
                     {filtered_data.length}
                   </span>
@@ -560,30 +658,36 @@ export default function SavingsPage() {
             }
           />
         </Tabs>
-        {selected_type === 'leases' ? (
+        {selected_type === "leases" ? (
           <LeaseTable
             data={sorted_lease_data}
             current_page={current_page}
             total_pages={total_pages}
             sort_descriptor={{
               column: sort_field || "deleted_date",
-              direction: sort_direction
+              direction: sort_direction,
             }}
             expanded_rows={expanded_rows}
             on_sort_change={(descriptor: SortDescriptor) => {
               if (descriptor.column) {
-                set_sort_field(descriptor.column as 'savings' | 'value' | 'deleted_date')
-                set_sort_direction(descriptor.direction === 'ascending' ? 'ascending' : 'descending')
+                set_sort_field(
+                  descriptor.column as "savings" | "value" | "deleted_date"
+                );
+                set_sort_direction(
+                  descriptor.direction === "ascending"
+                    ? "ascending"
+                    : "descending"
+                );
               }
             }}
             on_page_change={set_current_page}
             on_row_expand={handle_row_expand}
           />
-        ) : selected_type === 'grants' ? (
+        ) : selected_type === "grants" ? (
           <div className="flex-grow overflow-hidden flex flex-col">
             <div className="flex-grow overflow-hidden flex flex-col border border-divider rounded-lg bg-white">
               <div className="flex-grow overflow-auto">
-                <Table 
+                <Table
                   aria-label="Grants savings table"
                   layout="fixed"
                   classNames={{
@@ -602,50 +706,93 @@ export default function SavingsPage() {
                       "sticky top-0",
                       "z-10",
                       "border-b border-divider",
-                      'text-left'
+                      "text-left",
                     ].join(" "),
                     td: [
                       "py-4",
                       "group-data-[odd=true]:bg-default-50/50",
                       "whitespace-nowrap",
-                    ].join(" ")
+                    ].join(" "),
                   }}
                 >
                   <TableHeader>
-                    <TableColumn className='text-left !w-[180px]' key="agency" width={180}>AGENCY</TableColumn>
-                    <TableColumn className='text-left !w-[180px]' key="recipient" width={180}>RECIPIENT</TableColumn>
-                    <TableColumn className='text-left !w-[300px]' key="description" width={300}>DESCRIPTION</TableColumn>
-                    <TableColumn className='text-left !w-[120px]' key="date" width={120}>DATE</TableColumn>
-                    <TableColumn className='text-left !w-[120px]' key="value" width={120}>VALUE</TableColumn>
-                    <TableColumn className='text-left !w-[120px]' key="savings" width={120}>SAVED</TableColumn>
-                    <TableColumn className='text-left !w-[80px]' width={80}>LINK</TableColumn>
+                    <TableColumn
+                      className="text-left !w-[180px]"
+                      key="agency"
+                      width={180}
+                    >
+                      AGENCY
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[180px]"
+                      key="recipient"
+                      width={180}
+                    >
+                      RECIPIENT
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[300px]"
+                      key="description"
+                      width={300}
+                    >
+                      DESCRIPTION
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[120px]"
+                      key="date"
+                      width={120}
+                    >
+                      DATE
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[120px]"
+                      key="value"
+                      width={120}
+                    >
+                      VALUE
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[120px]"
+                      key="savings"
+                      width={120}
+                    >
+                      SAVED
+                    </TableColumn>
+                    <TableColumn className="text-left !w-[80px]" width={80}>
+                      LINK
+                    </TableColumn>
                   </TableHeader>
                   <TableBody>
                     {sorted_grants_data.map((grant) => (
                       <React.Fragment key={grant.date + grant.recipient}>
-                        <TableRow 
+                        <TableRow
                           className="group cursor-pointer hover:bg-default-100/50 transition-colors"
                           onClick={() => {
-                            set_selected_grant(grant)
-                            onOpen()
+                            set_selected_grant(grant);
+                            onOpen();
                           }}
                         >
                           <TableCell width={180} className="text-base">
-                            {grant.agency || '-'}
+                            {grant.agency || "-"}
                           </TableCell>
                           <TableCell width={180} className="text-base">
-                            {grant.recipient || '-'}
+                            {grant.recipient || "-"}
                           </TableCell>
                           <TableCell width={300} className="text-base truncate">
-                            {truncate_text(grant.description || '', 42)}
+                            {truncate_text(grant.description || "", 42)}
                           </TableCell>
                           <TableCell width={120} className="text-base">
-                            {grant.date ? new Date(grant.date).toLocaleDateString() : '-'}
+                            {grant.date
+                              ? new Date(grant.date).toLocaleDateString()
+                              : "-"}
                           </TableCell>
                           <TableCell width={120} className="text-base">
                             ${(grant.value || 0).toLocaleString()}
                           </TableCell>
-                          <TableCell width={120} className="text-base font-semibold">
+                          <TableCell
+                            width={120}
+                            className="text-base font-semibold"
+                          >
                             ${(grant.savings || 0).toLocaleString()}
                           </TableCell>
                           <TableCell width={80}>
@@ -722,7 +869,7 @@ export default function SavingsPage() {
           <div className="flex-grow overflow-hidden flex flex-col">
             <div className="flex-grow overflow-hidden flex flex-col border border-divider rounded-lg bg-white">
               <div className="flex-grow overflow-auto">
-                <Table 
+                <Table
                   aria-label="Savings initiatives table"
                   layout="fixed"
                   classNames={{
@@ -744,7 +891,7 @@ export default function SavingsPage() {
                       "sticky top-0",
                       "z-10",
                       "border-b border-divider",
-                      'btn text-left'
+                      "btn text-left",
                     ].join(" "),
                     td: [
                       "py-4",
@@ -758,41 +905,78 @@ export default function SavingsPage() {
                   }}
                 >
                   <TableHeader>
-                    <TableColumn className='text-left !w-[180px]' key="agency" width={180}>AGENCY</TableColumn>
-                    <TableColumn className='text-left !w-[180px]' key="vendor" width={180}>VENDOR</TableColumn>
-                    <TableColumn className='text-left !w-[300px]' key="description" width={300}>DESCRIPTION</TableColumn>
-                    <TableColumn className='text-left !w-[120px]' key="deleted_date" width={120}>DATE</TableColumn>
-                    <TableColumn className='text-left !w-[80px]' width={80}>FPDS</TableColumn>
-                    <TableColumn className='text-left !w-[120px]' key="savings" width={120}>SAVED</TableColumn>
+                    <TableColumn
+                      className="text-left !w-[180px]"
+                      key="agency"
+                      width={180}
+                    >
+                      AGENCY
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[180px]"
+                      key="vendor"
+                      width={180}
+                    >
+                      VENDOR
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[300px]"
+                      key="description"
+                      width={300}
+                    >
+                      DESCRIPTION
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[120px]"
+                      key="deleted_date"
+                      width={120}
+                    >
+                      DATE
+                    </TableColumn>
+                    <TableColumn className="text-left !w-[80px]" width={80}>
+                      FPDS
+                    </TableColumn>
+                    <TableColumn
+                      className="text-left !w-[120px]"
+                      key="savings"
+                      width={120}
+                    >
+                      SAVED
+                    </TableColumn>
                   </TableHeader>
                   <TableBody>
                     {paginated_data
-                      .filter((item): item is normalized_contract => 
-                        'type' in item && 
-                        item.type === 'Contract' && 
-                        item !== null && 
-                        item !== undefined
+                      .filter(
+                        (item): item is normalized_contract =>
+                          "type" in item &&
+                          item.type === "Contract" &&
+                          item !== null &&
+                          item !== undefined
                       )
                       .map((contract) => (
-                        <TableRow 
+                        <TableRow
                           key={contract.id}
                           className="group cursor-pointer hover:bg-default-100/50 transition-colors"
                           onClick={() => {
-                            set_selected_contract(contract)
-                            onOpen()
+                            set_selected_contract(contract);
+                            onOpen();
                           }}
                         >
                           <TableCell width={180} className="text-base">
-                            {contract.agency || '-'}
+                            {contract.agency || "-"}
                           </TableCell>
                           <TableCell width={180} className="text-base">
-                            {contract.vendor || '-'}
+                            {contract.vendor || "-"}
                           </TableCell>
                           <TableCell width={300} className="text-base">
-                            {truncate_text(contract.description || '', 42)}
+                            {truncate_text(contract.description || "", 42)}
                           </TableCell>
                           <TableCell width={120} className="text-base">
-                            {contract.deleted_date ? new Date(contract.deleted_date).toLocaleDateString() : '-'}
+                            {contract.deleted_date
+                              ? new Date(
+                                  contract.deleted_date
+                                ).toLocaleDateString()
+                              : "-"}
                           </TableCell>
                           <TableCell width={80}>
                             <div className="relative flex justify-end items-center gap-2">
@@ -810,7 +994,10 @@ export default function SavingsPage() {
                               )}
                             </div>
                           </TableCell>
-                          <TableCell width={120} className="text-base font-semibold">
+                          <TableCell
+                            width={120}
+                            className="text-base font-semibold"
+                          >
                             ${(contract.savings || 0).toLocaleString()}
                           </TableCell>
                         </TableRow>
@@ -871,8 +1058,8 @@ export default function SavingsPage() {
         )}
       </div>
 
-      <Modal 
-        isOpen={isOpen} 
+      <Modal
+        isOpen={isOpen}
         onOpenChange={onOpenChange}
         size="2xl"
         scrollBehavior="inside"
@@ -887,48 +1074,84 @@ export default function SavingsPage() {
                 {selected_contract && (
                   <div className="space-y-4">
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Agency</h3>
-                      <p className="text-base">{selected_contract.agency || '-'}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Agency
+                      </h3>
+                      <p className="text-base">
+                        {selected_contract.agency || "-"}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Vendor</h3>
-                      <p className="text-base">{selected_contract.vendor || '-'}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Vendor
+                      </h3>
+                      <p className="text-base">
+                        {selected_contract.vendor || "-"}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Description</h3>
-                      <p className="text-base whitespace-pre-wrap">{selected_contract.description || '-'}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Description
+                      </h3>
+                      <p className="text-base whitespace-pre-wrap">
+                        {selected_contract.description || "-"}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">PIID</h3>
-                      <p className="text-base">{selected_contract.piid || '-'}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        PIID
+                      </h3>
+                      <p className="text-base">
+                        {selected_contract.piid || "-"}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Value</h3>
-                      <p className="text-base">${(selected_contract.value || 0).toLocaleString()}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Value
+                      </h3>
+                      <p className="text-base">
+                        ${(selected_contract.value || 0).toLocaleString()}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Savings</h3>
-                      <p className="text-base font-semibold">${(selected_contract.savings || 0).toLocaleString()}</p>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Savings
+                      </h3>
+                      <p className="text-base font-semibold">
+                        ${(selected_contract.savings || 0).toLocaleString()}
+                      </p>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Status</h3>
-                      <span className={`px-3 py-1.5 rounded-full text-sm font-medium ${
-                        selected_contract.fpds_status === 'Verified' 
-                          ? 'bg-success/10 text-success' 
-                          : 'bg-warning/10 text-warning'
-                      }`}>
-                        {selected_contract.fpds_status || 'Unknown'}
+                      <h3 className="text-sm font-medium text-default-400">
+                        Status
+                      </h3>
+                      <span
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium ${
+                          selected_contract.fpds_status === "Verified"
+                            ? "bg-success/10 text-success"
+                            : "bg-warning/10 text-warning"
+                        }`}
+                      >
+                        {selected_contract.fpds_status || "Unknown"}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium text-default-400">Date</h3>
+                      <h3 className="text-sm font-medium text-default-400">
+                        Date
+                      </h3>
                       <p className="text-base">
-                        {selected_contract.deleted_date ? new Date(selected_contract.deleted_date).toLocaleDateString() : '-'}
+                        {selected_contract.deleted_date
+                          ? new Date(
+                              selected_contract.deleted_date
+                            ).toLocaleDateString()
+                          : "-"}
                       </p>
                     </div>
                     {selected_contract.fpds_link && (
                       <div>
-                        <h3 className="text-sm font-medium text-default-400">FPDS Link</h3>
+                        <h3 className="text-sm font-medium text-default-400">
+                          FPDS Link
+                        </h3>
                         <a
                           href={selected_contract.fpds_link}
                           target="_blank"
@@ -952,5 +1175,5 @@ export default function SavingsPage() {
         </ModalContent>
       </Modal>
     </div>
-  )
-} 
+  );
+}
