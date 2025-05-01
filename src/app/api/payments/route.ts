@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     const search_params = request.nextUrl.searchParams;
     const page = parseInt(search_params.get('page') || '1');
-    const per_page = parseInt(search_params.get('per_page') || '100');
+    const per_page = parseInt(search_params.get('per_page') || '500');
     const sort_by = search_params.get('sort_by');
     const sort_order = search_params.get('sort_order');
     const filter = search_params.get('filter');

@@ -47,7 +47,7 @@ export default function GrantsPage({ searchParams }: grants_page_props) {
   });
 
   const current_page = parseInt(searchParams.page || '1');
-  const items_per_page = parseInt(searchParams.per_page || '100');
+  const items_per_page = parseInt(searchParams.per_page || '500');
 
   useEffect(() => {
     async function load_data() {

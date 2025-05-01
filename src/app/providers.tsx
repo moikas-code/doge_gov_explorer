@@ -11,7 +11,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <I18nProvider locale="en-US">
       <NextUIProvider navigate={router.push}>
-        <NextThemesProvider attribute="class" defaultTheme="dark" enableSystem storageKey="doge-theme">
+        <NextThemesProvider 
+          attribute="class" 
+          defaultTheme="system" 
+          enableSystem
+          disableTransitionOnChange
+        >
           {children}
         </NextThemesProvider>
       </NextUIProvider>

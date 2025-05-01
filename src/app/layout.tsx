@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Quicksand } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import { Navbar } from "@/components/navbar";
 
 const quicksand = Quicksand({ 
   subsets: ["latin"],
@@ -19,17 +20,20 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       </head>
-      <body className={`${quicksand.className} bg-background text-foreground min-h-screen`}>
-        <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/90">
-          <Providers>
-            {children}
-          </Providers>
-        </div>
+      <body className={quicksand.className}>
+        <Providers>
+          <div className="min-h-screen bg-background">
+            <Navbar />
+            <main className="container mx-auto px-4">
+              {children}
+            </main>
+          </div>
+        </Providers>
       </body>
     </html>
   );

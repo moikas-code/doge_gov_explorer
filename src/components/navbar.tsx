@@ -12,6 +12,7 @@ import {
   NavbarMenuItem
 } from "@nextui-org/react"
 import { usePathname } from 'next/navigation'
+import { ThemeToggle } from './theme_toggle'
 
 export function Navbar() {
   const pathname = usePathname()
@@ -28,9 +29,8 @@ export function Navbar() {
       isBordered
       isMenuOpen={is_menu_open}
       onMenuOpenChange={set_is_menu_open}
-      className="bg-background/70 bg-white backdrop-blur-md border-b border-kawaii-pink/20 z-50 flex flex-col flex-md-row"
+      className="bg-background/70 backdrop-blur-md border-b border-kawaii-pink/20 z-50 flex flex-col flex-md-row"
       maxWidth="full"
-      
     >
       <NavbarContent className="sm:hidden" justify="start">
         <NavbarMenuToggle 
@@ -72,6 +72,12 @@ export function Navbar() {
         ))}
       </NavbarContent>
 
+      <NavbarContent justify="end">
+        <NavbarItem>
+          <ThemeToggle />
+        </NavbarItem>
+      </NavbarContent>
+
       {/* <NavbarContent justify="end">
         <NavbarItem>
           <Button 
@@ -86,7 +92,7 @@ export function Navbar() {
         </NavbarItem>
       </NavbarContent> */}
 
-      <NavbarMenu className="bg-background/95 bg-white backdrop-blur-md pt-6">
+      <NavbarMenu className="bg-background/95 backdrop-blur-md pt-6">
         {menu_items.map((item) => (
           <NavbarMenuItem key={item.href}>
             <NextUILink

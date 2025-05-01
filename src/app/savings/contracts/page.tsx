@@ -49,7 +49,7 @@ export default function ContractsPage({ searchParams }: contracts_page_props) {
   });
 
   const current_page = parseInt(searchParams.page || '1');
-  const items_per_page = parseInt(searchParams.per_page || '100');
+  const items_per_page = parseInt(searchParams.per_page || '500');
 
   useEffect(() => {
     async function load_data() {
@@ -84,12 +84,32 @@ export default function ContractsPage({ searchParams }: contracts_page_props) {
       label: 'Value',
       render: (value: unknown) => formatCurrency(value as number)
     },
-    { key: 'fpds_status', label: 'FPDS Status' },
-    { key: 'deleted_date', label: 'Deleted Date' },
+    { key: 'description', label: 'Description' },
+    { key: 'fpds_status', label: 'Status' },
+    { key: 'deleted_date', label: 'Deleted' },
     {
       key: 'savings',
       label: 'Savings',
       render: (value: unknown) => formatCurrency(value as number)
+    },
+    {
+      key: 'fpds_link',
+      label: 'Link',
+      render: (_: unknown, row: contract_item) => (
+        <div className="flex justify-end">
+          {row.fpds_link && (
+            <a
+              href={row.fpds_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800"
+            >
+              <ExternalLinkIcon className="w-4 h-4" />
+              FPDS
+            </a>
+          )}
+        </div>
+      )
     }
   ];
 

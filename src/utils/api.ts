@@ -11,27 +11,37 @@ export interface query_params {
   filter_value?: string;
 }
 
-export async function fetch_api<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+const default_params: query_params = {
+  sort_by: 'date',
+  sort_order: 'desc',
+  page: 1,
+  per_page: 500
+};
+
+export async function fetch_api<T>(endpoint: string, params: query_params = default_params): Promise<api_response<T>> {
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+    const search_params = new URLSearchParams();
+    
+    // Merge default params with provided params
+    const merged_params = { ...default_params, ...params };
+    
+    Object.entries(merged_params).forEach(([key, value]) => {
+      if (value !== undefined) {
+        search_params.append(key, value.toString());
+      }
     });
 
+    const url = `${API_BASE_URL}${endpoint}${search_params.toString() ? `?${search_params.toString()}` : ''}`;
+    const response = await fetch(url);
+
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`API request failed: ${response.statusText}`);
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('API request failed:', error);
+    console.error(`Error fetching from ${endpoint}:`, error);
     throw error;
   }
 }
@@ -59,16 +69,16 @@ interface lease_response {
   leases: savings_initiative[];
 }
 
-export async function fetch_grant_savings(): Promise<api_response<grant_response>> {
-  return fetch_api('/savings/grants');
+export async function fetch_grant_savings(params: query_params = {}): Promise<api_response<grant_response>> {
+  return fetch_api('/savings/grants', params);
 }
 
-export async function fetch_contract_savings(): Promise<api_response<contracts_response>> {
-  return fetch_api('/savings/contracts');
+export async function fetch_contract_savings(params: query_params = {}): Promise<api_response<contracts_response>> {
+  return fetch_api('/savings/contracts', params);
 }
 
-export async function fetch_lease_savings(): Promise<api_response<lease_response>> {
-  return fetch_api('/savings/leases');
+export async function fetch_lease_savings(params: query_params = {}): Promise<api_response<lease_response>> {
+  return fetch_api('/savings/leases', params);
 }
 
 export async function fetch_all_savings() {
@@ -77,13 +87,13 @@ export async function fetch_all_savings() {
     fetch_contract_savings(),
     fetch_lease_savings(),
   ]);
-  console.log(grants);
+  
   const all_data = [
     ...(grants.result?.grants || []),
     ...(contracts.result?.contracts || []),
     ...(leases.result?.leases || []),
   ];
-
+  console.log(all_data);
   return {
     success: true,
     result: all_data,
@@ -103,7 +113,7 @@ export async function fetch_payments(params: query_params = {}): Promise<api_res
     sort_by: 'post_date',
     sort_order: 'desc',
     page: 1,
-    per_page: 100,
+    per_page: 500,
     ...params
   };
 

@@ -1,11 +1,13 @@
 export interface savings_initiative {
   id: string;
-  date: string;
   amount: number;
+  date: string;
+  agency: string;
+  recipient: string;
+  value: number;
+  link?: string;
+  description?: string;
   type: string;
-  status: 'Pending' | 'Verified' | 'Rejected';
-  department: string;
-  description: string;
 }
 
 export interface expenditure {

@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import { Navbar } from '@/components/navbar';
 import { Tabs, Tab, Card } from '@nextui-org/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -16,7 +15,6 @@ export default function SavingsLayout({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">

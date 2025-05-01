@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { Navbar } from '@/components/navbar'
 import { Card, CardBody, CardHeader } from '@nextui-org/react'
 import { fetch_all_savings, fetch_payments } from '@/utils/api'
 
@@ -19,13 +18,15 @@ interface savings_initiative {
 }
 
 interface contract_item {
-  id: string;
-  date: string;
-  amount: number;
-  department: string;
-  type: string;
-  description?: string;
-  link?: string;
+  piid: string;
+  agency: string;
+  vendor: string;
+  value: number;
+  description: string | null;
+  fpds_status: string | null;
+  fpds_link: string | null;
+  deleted_date: string | null;
+  savings: number;
 }
 
 interface stats {
@@ -78,14 +79,21 @@ export default function Home() {
         try {
           const savings_response = await fetch_all_savings();
           
-          // Calculate total savings
+          // Calculate total savings from both savings initiatives and contracts
           total_savings = (savings_response as savings_response).result
-            ?.filter((item): item is savings_initiative => 'savings' in item)
-            .reduce((sum, item) => sum + (item.savings || 0), 0) || 0;
+            ?.reduce((sum, item) => {
+              if ('savings' in item) {
+                return sum + (item.savings || 0);
+              }
+              return sum;
+            }, 0) || 0;
 
-          // Calculate projected savings
+          // Calculate projected savings from verified initiatives only
           projected_savings = (savings_response as savings_response).result
-            ?.filter((item): item is savings_initiative => 'projected_savings' in item && item.status === 'Verified')
+            ?.filter((item): item is savings_initiative => 
+              'projected_savings' in item && 
+              item.status === 'Verified'
+            )
             .reduce((sum, item) => sum + (item.projected_savings || 0), 0) || 0;
 
         } catch (error) {
@@ -123,7 +131,6 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8">DOGE Government Dashboard</h1>
         

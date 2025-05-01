@@ -25,7 +25,7 @@ function PaymentsTable() {
   const [meta_data, set_meta_data] = useState<{ total_results: number; pages: number }>({ total_results: 0, pages: 0 });
   
   const current_page = parseInt(search_params.get('page') || '1');
-  const items_per_page = parseInt(search_params.get('per_page') || '100');
+  const items_per_page = parseInt(search_params.get('per_page') || '500');
   const current_sort_by = search_params.get('sort_by') || 'post_date';
   const current_sort_order = map_sort_direction(search_params.get('sort_order') || 'desc');
   const current_filter = search_params.get('filter') || undefined;
@@ -125,12 +125,10 @@ function PaymentsTableFallback() {
 
 // page.tsx - Server Component
 import { Suspense } from 'react';
-import { Navbar } from '@/components/navbar';
 
 export default function PaymentsPage() {
   return (
     <main className="min-h-screen">
-      <Navbar />
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6">Government Payments</h1>
         <Suspense fallback={<PaymentsTableFallback />}>
