@@ -29,7 +29,7 @@ export function LeaseTable({
   const lease_data = data
     .filter((item): item is lease_item => {
       if (!item || typeof item !== 'object') return false
-      const obj = item as any
+      const obj = item as Record<string, unknown>
       return (
         'location' in obj && 
         typeof obj.location === 'string' &&

@@ -662,23 +662,7 @@ export default function SavingsPage() {
             data={sorted_lease_data}
             current_page={current_page}
             total_pages={total_pages}
-            sort_descriptor={{
-              column: sort_field || "deleted_date",
-              direction: sort_direction,
-            }}
             expanded_rows={expanded_rows}
-            on_sort_change={(descriptor: SortDescriptor) => {
-              if (descriptor.column) {
-                set_sort_field(
-                  descriptor.column as "savings" | "value" | "deleted_date"
-                );
-                set_sort_direction(
-                  descriptor.direction === "ascending"
-                    ? "ascending"
-                    : "descending"
-                );
-              }
-            }}
             on_page_change={set_current_page}
             on_row_expand={handle_row_expand}
           />
